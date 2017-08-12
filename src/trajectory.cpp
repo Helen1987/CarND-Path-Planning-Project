@@ -1,4 +1,5 @@
 #include "trajectory.h"
+#include <iostream>
 #include <vector>
 #include "libs/spline.h"
 
@@ -10,25 +11,31 @@ namespace pathplanner {
     this->previous_path_y = previous_path_y;
   }
 
+  void Trajectory::convert2Local(vector<double>& ptsx, vector<double>& ptsy) {
 
-  void Trajectory::updateTrajectoryWaypoint(vector<double> ptsx, vector<double> ptsy, 
-    double ref_x, double ref_y, double ref_vel, double ref_yaw) {
-    /*for (int i = 0; i < ptsx.size(); ++i) {
-    cout << ptsx[i] << " ";
-    }
-    cout << endl;
-    for (int i = 0; i < ptsy.size(); ++i) {
-    cout << ptsy[i] << " ";
-    }*/
-
-    // transform to local coordinates
     for (int i = 0; i < ptsx.size(); ++i) {
       double shift_x = ptsx[i] - ref_x;
       double shift_y = ptsy[i] - ref_y;
-
       ptsx[i] = (shift_x*cos(0 - ref_yaw) - shift_y*sin(0 - ref_yaw));
       ptsy[i] = (shift_x*sin(0 - ref_yaw) + shift_y*cos(0 - ref_yaw));
     }
+  }
+
+  Trajectory::Coord Trajectory::convert2global(double x, double y) {
+
+    Coord coord;
+    coord.x = (x*cos(ref_yaw) - y*sin(ref_yaw));
+    coord.y = (x*sin(ref_yaw) + y*cos(ref_yaw));
+
+    coord.x += ref_x;
+    coord.y += ref_y;
+
+    return coord;
+  }
+
+  void Trajectory::update_trajectory(vector<double> ptsx, vector<double> ptsy, double ref_vel) {
+
+    convert2Local(ptsx, ptsy);
 
     // create a spline
     tk::spline s;
@@ -57,18 +64,11 @@ namespace pathplanner {
 
       x_add_on = x_point;
 
-      double x_ref = x_point;
-      double y_ref = y_point;
-
       // rotate back to normal after rotating it earlier
-      x_point = (x_ref*cos(ref_yaw) - y_ref*sin(ref_yaw));
-      y_point = (x_ref*sin(ref_yaw) + y_ref*cos(ref_yaw));
+      Coord point = convert2global(x_point, y_point);
 
-      x_point += ref_x;
-      y_point += ref_y;
-
-      next_x_vals.push_back(x_point);
-      next_y_vals.push_back(y_point);
+      next_x_vals.push_back(point.x);
+      next_y_vals.push_back(point.y);
     }
   }
 }

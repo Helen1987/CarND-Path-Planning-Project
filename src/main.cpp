@@ -159,9 +159,9 @@ int main() {
           vector<double> ptsx;
           vector<double> ptsy;
 
-          double ref_x = car_x;
-          double ref_y = car_y;
-          double ref_yaw = deg2rad(car_yaw);
+          trajectoryConverter.ref_x = car_x;
+          trajectoryConverter.ref_y = car_y;
+          trajectoryConverter.ref_yaw = deg2rad(car_yaw);
 
           if (prev_size < 2) {
             // Use two points that make the path tangent to the car
@@ -176,19 +176,20 @@ int main() {
           }
           // use the previous path's end point as starting reference
           else {
-            ref_x = previous_path_x[prev_size - 1];
-            ref_y = previous_path_y[prev_size - 1];
+            trajectoryConverter.ref_x = previous_path_x[prev_size - 1];
+            trajectoryConverter.ref_y = previous_path_y[prev_size - 1];
 
             double ref_x_prev = previous_path_x[prev_size - 2];
             double ref_y_prev = previous_path_y[prev_size - 2];
-            ref_yaw = atan2(ref_y - ref_y_prev, ref_x - ref_x_prev);
+            trajectoryConverter.ref_yaw = atan2(trajectoryConverter.ref_y - ref_y_prev,
+              trajectoryConverter.ref_x - ref_x_prev);
 
             // Use two points that make the path tangent to the previous path's end point
             ptsx.push_back(ref_x_prev);
-            ptsx.push_back(ref_x);
+            ptsx.push_back(trajectoryConverter.ref_x);
 
             ptsy.push_back(ref_y_prev);
-            ptsy.push_back(ref_y);
+            ptsy.push_back(trajectoryConverter.ref_y);
           }
 
           // In Frenet add evenly 30m spaced points ahead of the starting reference
@@ -205,7 +206,7 @@ int main() {
           ptsy.push_back(next_wp2[1]);
 
 
-          trajectoryConverter.updateTrajectoryWaypoint(ptsx, ptsy, ref_x, ref_y, ref_vel, ref_yaw);
+          trajectoryConverter.update_trajectory(ptsx, ptsy, ref_vel);
 
           /*cout << endl << "x path:" << endl;
           for (int i = 0; i < trajectoryConverter.next_x_vals.size(); ++i) {
