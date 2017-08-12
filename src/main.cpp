@@ -9,11 +9,9 @@
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
 #include "libs/spline.h"
-#include "helper_functions.h"
 #include "trajectory.h"
 
 using namespace std;
-using namespace helpers;
 using namespace pathplanner;
 
 // for convenience
@@ -74,8 +72,9 @@ int main() {
 
   int lane = 1;
   double ref_vel = 0.0;//mps
+  Trajectory trajectory = Trajectory(map_waypoints_s, map_waypoints_x, map_waypoints_y);
 
-  h.onMessage([&ref_vel, &lane,
+  h.onMessage([&ref_vel, &lane, &trajectory,
     &map_waypoints_x, &map_waypoints_y, &map_waypoints_s, &map_waypoints_dx, &map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
     uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -112,7 +111,8 @@ int main() {
 
           // Sensor Fusion Data, a list of all other cars on the same side of the road.
           auto sensor_fusion = j[1]["sensor_fusion"];
-          Trajectory trajectoryConverter = Trajectory(previous_path_x, previous_path_y);
+
+          trajectory.set_previous_path(previous_path_x, previous_path_y);
 
           json msgJson;
 
@@ -153,60 +153,7 @@ int main() {
             ref_vel += .224;
           }
 
-
-          // Create a list of widly spaced waypoints (x,y), evenly spaced at 30 m
-          // Later we will interpolate these waypoints with a spline and fill it in with more points tha control speed
-          vector<double> ptsx;
-          vector<double> ptsy;
-
-          trajectoryConverter.ref_x = car_x;
-          trajectoryConverter.ref_y = car_y;
-          trajectoryConverter.ref_yaw = deg2rad(car_yaw);
-
-          if (prev_size < 2) {
-            // Use two points that make the path tangent to the car
-            double prev_car_x = car_x - cos(car_yaw);
-            double prev_car_y = car_y - sin(car_yaw);
-
-            ptsx.push_back(prev_car_x);
-            ptsx.push_back(car_x);
-
-            ptsy.push_back(prev_car_y);
-            ptsy.push_back(car_y);
-          }
-          // use the previous path's end point as starting reference
-          else {
-            trajectoryConverter.ref_x = previous_path_x[prev_size - 1];
-            trajectoryConverter.ref_y = previous_path_y[prev_size - 1];
-
-            double ref_x_prev = previous_path_x[prev_size - 2];
-            double ref_y_prev = previous_path_y[prev_size - 2];
-            trajectoryConverter.ref_yaw = atan2(trajectoryConverter.ref_y - ref_y_prev,
-              trajectoryConverter.ref_x - ref_x_prev);
-
-            // Use two points that make the path tangent to the previous path's end point
-            ptsx.push_back(ref_x_prev);
-            ptsx.push_back(trajectoryConverter.ref_x);
-
-            ptsy.push_back(ref_y_prev);
-            ptsy.push_back(trajectoryConverter.ref_y);
-          }
-
-          // In Frenet add evenly 30m spaced points ahead of the starting reference
-          vector<double> next_wp0 = getXY(car_s + 30, 2 + 4 * lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-          vector<double> next_wp1 = getXY(car_s + 60, 2 + 4 * lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-          vector<double> next_wp2 = getXY(car_s + 90, 2 + 4 * lane, map_waypoints_s, map_waypoints_x, map_waypoints_y);
-
-          ptsx.push_back(next_wp0[0]);
-          ptsx.push_back(next_wp1[0]);
-          ptsx.push_back(next_wp2[0]);
-
-          ptsy.push_back(next_wp0[1]);
-          ptsy.push_back(next_wp1[1]);
-          ptsy.push_back(next_wp2[1]);
-
-
-          trajectoryConverter.update_trajectory(ptsx, ptsy, ref_vel);
+          trajectory.generate_trajectory(car_s, car_x, car_y, car_yaw, lane, ref_vel);
 
           /*cout << endl << "x path:" << endl;
           for (int i = 0; i < trajectoryConverter.next_x_vals.size(); ++i) {
@@ -218,8 +165,8 @@ int main() {
             cout << trajectoryConverter.next_y_vals[i] << " ";
           }*/
 
-          msgJson["next_x"] = trajectoryConverter.next_x_vals;
-          msgJson["next_y"] = trajectoryConverter.next_y_vals;
+          msgJson["next_x"] = trajectory.next_x_vals;
+          msgJson["next_y"] = trajectory.next_y_vals;
 
           auto msg = "42[\"control\"," + msgJson.dump() + "]";
 

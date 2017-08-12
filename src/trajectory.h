@@ -13,7 +13,8 @@ namespace pathplanner {
         double y;
       };
 
-      Trajectory(vector<double> previous_path_x, vector<double> previous_path_y);
+      Trajectory(vector<double> map_waypoints_s, vector<double> map_waypoints_x, vector<double> map_waypoints_y);
+      
       virtual ~Trajectory() {}
 
       double ref_x;
@@ -27,13 +28,27 @@ namespace pathplanner {
       vector<double> previous_path_x;
       vector<double> previous_path_y;
 
-      void update_trajectory(vector<double> ptsx, vector<double> ptsy, double ref_vel);
+      void set_previous_path(vector<double> previous_path_x, vector<double> previous_path_y);
+      void generate_trajectory(double car_s, double car_x, double car_y, double car_yaw, int lane, double ref_vel);
 
     private:
+
+      double const INTERVAL = .02;
+      double const DISTANCE = 30;
+      double const LANE_WIDTH = 4;
+      double const MIDDLE_LANE = LANE_WIDTH/2;
+
+      vector<double> map_waypoints_x;
+      vector<double> map_waypoints_y;
+      vector<double> map_waypoints_s;
+
+      double convert2mps(double mph) { return mph / 2.24; }
 
       void convert2Local(vector<double>& ptsx, vector<double>& ptsy);
 
       Coord convert2global(double x, double y);
+
+      void update_trajectory(vector<double> ptsx, vector<double> ptsy, double ref_vel);
 
   };
 
