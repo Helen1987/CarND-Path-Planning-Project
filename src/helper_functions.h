@@ -1,7 +1,12 @@
 #ifndef HELPER_FUNCTIONS_H_
 #define HELPER_FUNCTIONS_H_
 
+#include <math.h>
+#include <vector>
+
+
 namespace helpers {
+  using namespace std;
 
   // For converting back and forth between radians and degrees.
   constexpr double pi() { return M_PI; }
