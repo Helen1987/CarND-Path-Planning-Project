@@ -10,9 +10,11 @@
 #include "json.hpp"
 #include "libs/spline.h"
 #include "helper_functions.h"
+#include "trajectory.h"
 
 using namespace std;
 using namespace helpers;
+using namespace pathplanner;
 
 // for convenience
 using json = nlohmann::json;
@@ -73,7 +75,8 @@ int main() {
   int lane = 1;
   double ref_vel = 0.0;//mps
 
-  h.onMessage([&ref_vel, &lane, &map_waypoints_x, &map_waypoints_y, &map_waypoints_s, &map_waypoints_dx, &map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&ref_vel, &lane,
+    &map_waypoints_x, &map_waypoints_y, &map_waypoints_s, &map_waypoints_dx, &map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
     uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -109,6 +112,7 @@ int main() {
 
           // Sensor Fusion Data, a list of all other cars on the same side of the road.
           auto sensor_fusion = j[1]["sensor_fusion"];
+          Trajectory trajectoryConverter = Trajectory(previous_path_x, previous_path_y);
 
           json msgJson;
 
@@ -200,85 +204,21 @@ int main() {
           ptsy.push_back(next_wp1[1]);
           ptsy.push_back(next_wp2[1]);
 
-          // transform to local coordinates
-          for (int i = 0; i < ptsx.size(); ++i) {
-            double shift_x = ptsx[i] - ref_x;
-            double shift_y = ptsy[i] - ref_y;
 
-            ptsx[i] = (shift_x*cos(0 - ref_yaw) - shift_y*sin(0 - ref_yaw));
-            ptsy[i] = (shift_x*sin(0 - ref_yaw) + shift_y*cos(0 - ref_yaw));
-          }
+          trajectoryConverter.updateTrajectoryWaypoint(ptsx, ptsy, ref_x, ref_y, ref_vel, ref_yaw);
 
-          // create a spline
-          tk::spline s;
-          /*for (int i = 0; i < ptsx.size(); ++i) {
-            cout << ptsx[i] << " ";
-          }
-          cout << endl;
-          for (int i = 0; i < ptsy.size(); ++i) {
-            cout << ptsy[i] << " ";
-          }*/
-          
-          // set x, y points to the spline
-          s.set_points(ptsx, ptsy);
-
-          // actual (x, y) we use for the planner
-          vector<double> next_x_vals;
-          vector<double> next_y_vals;
-
-          // fill with the previous points from the last time
-          for (int i = 0; i < previous_path_x.size(); ++i) {
-            next_x_vals.push_back(previous_path_x[i]);
-            next_y_vals.push_back(previous_path_y[i]);
-          }
-
-          // calculate how to break up spline points so that we travel at our ddesired reference velocity
-          // we have local coordinates here
-          double target_x = 30.0;
-          double target_y = s(target_x);
-          double target_dist = sqrt((target_x)*(target_x) + (target_y)*(target_y));
-
-          double x_add_on = 0;
-
-          // fill up the rest planner after filling it with the previous points, here we will always output 50 points
-          for (int i = 1; i <= 50 - previous_path_x.size(); ++i) {
-            double N = (target_dist / (.02*ref_vel / 2.24));
-            double x_point = x_add_on + (target_x) / N;
-            double y_point = s(x_point);
-
-            x_add_on = x_point;
-
-            double x_ref = x_point;
-            double y_ref = y_point;
-
-            // rotate back to normal after rotating it earlier
-            x_point = (x_ref*cos(ref_yaw) - y_ref*sin(ref_yaw));
-            y_point = (x_ref*sin(ref_yaw) + y_ref*cos(ref_yaw));
-
-            x_point += ref_x;
-            y_point += ref_y;
-
-            next_x_vals.push_back(x_point);
-            next_y_vals.push_back(y_point);
-          }
-          /*double dist_inc = 0.5;
-          for (int i = 0; i < 50; i++)
-          {
-            next_x_vals.push_back(car_x + (dist_inc*i)*cos(deg2rad(car_yaw)));
-            next_y_vals.push_back(car_y + (dist_inc*i)*sin(deg2rad(car_yaw)));
-          }*/
           /*cout << endl << "x path:" << endl;
-          for (int i = 0; i < next_x_vals.size(); ++i) {
-            cout << next_x_vals[i] << " ";
+          for (int i = 0; i < trajectoryConverter.next_x_vals.size(); ++i) {
+            cout << trajectoryConverter.next_x_vals[i] << " ";
           }
           cout << endl;
           cout << "y path:" << endl;
-          for (int i = 0; i < next_y_vals.size(); ++i) {
-            cout << next_y_vals[i] << " ";
+          for (int i = 0; i < trajectoryConverter.next_y_vals.size(); ++i) {
+            cout << trajectoryConverter.next_y_vals[i] << " ";
           }*/
 
-          msgJson["next_x"] = next_x_vals;
-          msgJson["next_y"] = next_y_vals;
+          msgJson["next_x"] = trajectoryConverter.next_x_vals;
+          msgJson["next_y"] = trajectoryConverter.next_y_vals;
 
           auto msg = "42[\"control\"," + msgJson.dump() + "]";
 
