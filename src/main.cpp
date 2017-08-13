@@ -139,37 +139,7 @@ int main() {
           ego_car.update_params(car_x, car_y, car_speed, car_yaw, car_s, car_d);
           ego_car.update_state(predictions, 3);
           ego_car.realize_state(predictions);
-
-          /*bool too_close = false;
-
-          // find ref_v to use
-          for (int i = 0; i < sensor_fusion.size(); ++i) {
-            // car is in my lane
-            float d = sensor_fusion[i][6];
-            if (d < (2 + 4 * lane + 2) && d >(2 + 4 * lane - 2)) {
-              double vx = sensor_fusion[i][3];
-              double vy = sensor_fusion[i][4];
-              double check_speed = sqrt(vx*vx + vy*vy);
-              double check_car_s = sensor_fusion[i][5];
-
-              check_car_s += (double)prev_size*.02*check_speed; // if using previous points can project s value out
-              // check s values greater than mine and s gap
-              if ((check_car_s > car_s) && (check_car_s - car_s) < 30) {
-                too_close = true;
-                if (lane > 0) {
-                  lane = 0;
-                }
-              }
-
-            }
-          }
-
-          if (too_close) {
-            ref_vel -= .224;
-          }
-          else if (ref_vel < 49.5) {
-            ref_vel += .224;
-          }*/
+          //cout << "state: " << ego_car.state << " ref_vel: " << ego_car.ref_vel << " lane: " << ego_car.lane << endl;
 
           trajectory.generate_trajectory(car_s, car_x, car_y, car_yaw, ego_car.lane, ego_car.ref_vel);
 

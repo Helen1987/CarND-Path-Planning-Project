@@ -102,7 +102,7 @@ namespace pathplanner {
       [](Vehicle::estimate est1, Vehicle::estimate est2) {
       return est1.cost < est2.cost;
     });
-    cout << "best estimate: " << (*best).cost << " in state " << (*best).state << endl;
+    //cout << "best estimate: " << (*best).cost << " in state " << (*best).state << endl;
     return (*best).state;
   }
 
@@ -145,6 +145,8 @@ namespace pathplanner {
     snapshot_temp.ddx = this->ddx;
     snapshot_temp.ddy = this->ddy;
     snapshot_temp.state = this->state;
+    snapshot_temp.lane = this->lane;
+    snapshot_temp.ref_vel = this->ref_vel;
 
     return snapshot_temp;
   }
@@ -178,6 +180,8 @@ namespace pathplanner {
     this->ddx = snapshot.ddx;
     this->ddy = snapshot.ddy;
     this->state = snapshot.state;
+    this->ref_vel = snapshot.ref_vel;
+    this->lane = snapshot.lane;
   }
 
   //void Vehicle::configure(vector<int> road_data) {
@@ -193,7 +197,6 @@ namespace pathplanner {
   //}
 
   string Vehicle::display() {
-
     cout << "s:    " << this->s << endl;
     cout << "d: " << this->d << endl;
     cout << "vx:    " << this->dx << endl;
@@ -294,7 +297,6 @@ namespace pathplanner {
     {
       realize_prep_lane_change(predictions, "R");
     }
-    cout << "state: " << state << " ref_vel: " << ref_vel << " lane: " << lane << endl;
   }
 
   void Vehicle::realize_constant_speed() {
@@ -322,6 +324,7 @@ namespace pathplanner {
     }
     else if (ref_vel < MAX_SPEED) {
       ref_vel += SPEED_INCREMENT;
+      //cout << "_update_ref_speed_for_lane" << ref_vel << endl;
     }
   }
 
@@ -385,6 +388,7 @@ namespace pathplanner {
           velocity = MAX_SPEED;
         }
         ref_vel = velocity;
+        //cout << " realize_prep_lane_change " << ref_vel << endl;
       }
     }
   }

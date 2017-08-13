@@ -70,6 +70,8 @@ namespace pathplanner {
       double ddy;
       double s;
       double d;
+      double ref_vel;
+      double lane;
       string state;
     };
 
