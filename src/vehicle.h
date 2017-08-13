@@ -16,12 +16,11 @@ namespace pathplanner {
   class Vehicle {
 
   private:
-    double TIME_INTERVAL = 0.02;
-    double LANE_WIDTH = 4;
-    double MIDDLE_LANE = LANE_WIDTH/2;
-    double SAFE_DISTANCE = 10.0;
-    double SPEED_INCREMENT = .224;
-    double MAX_SPEED = 49.5;
+    double const TIME_INTERVAL = 0.02;
+    double const LANE_WIDTH = 4.0;
+    double const MIDDLE_LANE = LANE_WIDTH/2;
+    double const SAFE_DISTANCE = 10.0;
+    double const SPEED_INCREMENT = .224;
 
     double x;
     double y;
@@ -29,8 +28,7 @@ namespace pathplanner {
     double dy;
     double ddx;
     double ddy;
-    double s;
-    double d;
+
 
     int leading_vehicle = -1;
 
@@ -44,7 +42,11 @@ namespace pathplanner {
     }
 
   public:
+    double const MAX_SPEED = 49.5;
+
     int id;
+    double s;
+    double d;
 
     double ref_vel = 0.0;
     int lane = 1;
@@ -59,6 +61,10 @@ namespace pathplanner {
       double d;
       double vx;
       double vy;
+
+      bool is_in_lane(int lane) {
+        return d < (4.0 * (lane + 1)) && d >(4.0 * lane);
+      }
     };
 
     struct snapshot {
@@ -73,6 +79,14 @@ namespace pathplanner {
       double ref_vel;
       double lane;
       string state;
+
+      double get_speed() {
+        return sqrt(dx*dx+dy*dy);
+      }
+
+      double get_acceleration() {
+        return sqrt(ddx*ddx + ddy*ddy);
+      }
     };
 
     int preferred_buffer = 6; // impacts "keep lane" behavior.
@@ -122,8 +136,6 @@ namespace pathplanner {
     vector<snapshot> trajectory_for_state(string state, map<int, vector<prediction>> predictions,
       int horizon = 5);
     void restore_state_from_snapshot(snapshot snapshot);
-    double calculate_cost(vector<snapshot> trajectory, map<int, vector<prediction>>predictions,
-      string state, bool verbose = false);
 
     void _update_ref_speed_for_lane(map<int, vector<prediction> > predictions, int lane, int s);
     snapshot get_snapshot();

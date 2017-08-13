@@ -7,6 +7,7 @@
 #include <iterator>
 #include <tuple>
 #include <algorithm>
+#include "estimator.h"
 
 namespace pathplanner {
 
@@ -90,11 +91,12 @@ namespace pathplanner {
     }
 
     auto costs = vector<Vehicle::estimate>();
+    Estimator estimator = Estimator();
     for (auto state : states) {
       Vehicle::estimate estimate = Vehicle::estimate();
       estimate.state = state;
       auto trajectory = trajectory_for_state(state, predictions);
-      estimate.cost = calculate_cost(trajectory, predictions, state);
+      estimate.cost = estimator.calculate_cost(trajectory, predictions, state);
       costs.push_back(estimate);
     }
 
@@ -149,26 +151,6 @@ namespace pathplanner {
     snapshot_temp.ref_vel = this->ref_vel;
 
     return snapshot_temp;
-  }
-
-  double Vehicle::calculate_cost(vector<Vehicle::snapshot> trajectory,
-    map<int, vector<prediction>>predictions, string state, bool verbose/*=false*/) {
-    /*trajectory_data = get_helper_data(vehicle, trajectory, predictions)
-    cost = 0.0
-    for cf in [
-    distance_from_goal_lane,
-    inefficiency_cost,
-    collision_cost,
-    buffer_cost,
-    change_lane_cost]:
-    new_cost = cf(vehicle, trajectory, predictions, trajectory_data)
-    if DEBUG or verbose:
-    print "{} has cost {} for lane {}".format(cf.__name__, new_cost, trajectory[-1].lane)
-    # pdb.set_trace()
-    cost += new_cost*/
-    if (state == "KL")
-      return 0;
-    return 1000;//cost
   }
 
   void Vehicle::restore_state_from_snapshot(Vehicle::snapshot snapshot) {
