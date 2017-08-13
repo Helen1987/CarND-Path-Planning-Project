@@ -10,6 +10,7 @@
 #include "json.hpp"
 #include "libs/spline.h"
 #include "trajectory.h"
+#include "vehicle.h"
 
 using namespace std;
 using namespace pathplanner;
@@ -70,11 +71,12 @@ int main() {
     map_waypoints_dy.push_back(d_y);
   }
 
-  int lane = 1;
-  double ref_vel = 0.0;//mps
+  //int lane = 1;
+  //double ref_vel = 0.0;//mps
   Trajectory trajectory = Trajectory(map_waypoints_s, map_waypoints_x, map_waypoints_y);
+  Vehicle ego_car = Vehicle(-1);
 
-  h.onMessage([&ref_vel, &lane, &trajectory,
+  h.onMessage([&trajectory, &ego_car,
     &map_waypoints_x, &map_waypoints_y, &map_waypoints_s, &map_waypoints_dx, &map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
     uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -117,12 +119,28 @@ int main() {
           json msgJson;
 
           int prev_size = previous_path_x.size();
-          
+
           if (prev_size > 0) {
             car_s = end_path_s;
           }
 
-          bool too_close = false;
+          // [car's unique ID, car's x position in map coordinates, car's y position in map coordinates, 
+          // car's x velocity in m/s, car's y velocity in m/s, car's s position in frenet coordinates, 
+          // car's d position in frenet coordinates.
+          vector<Vehicle> vehicles;
+          map<int, vector<Vehicle::prediction>> predictions;
+          for (auto data: sensor_fusion) {
+            // [id, x, y, dx, dy, s, d]
+            Vehicle vehicle = Vehicle(data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
+            vector<Vehicle::prediction> car_preds = vehicle.generate_predictions(10);
+            predictions[vehicle.id] = car_preds;
+          }
+
+          ego_car.update_params(car_x, car_y, car_speed, car_yaw, car_s, car_d);
+          ego_car.update_state(predictions, 3);
+          ego_car.realize_state(predictions);
+
+          /*bool too_close = false;
 
           // find ref_v to use
           for (int i = 0; i < sensor_fusion.size(); ++i) {
@@ -151,9 +169,9 @@ int main() {
           }
           else if (ref_vel < 49.5) {
             ref_vel += .224;
-          }
+          }*/
 
-          trajectory.generate_trajectory(car_s, car_x, car_y, car_yaw, lane, ref_vel);
+          trajectory.generate_trajectory(car_s, car_x, car_y, car_yaw, ego_car.lane, ego_car.ref_vel);
 
           /*cout << endl << "x path:" << endl;
           for (int i = 0; i < trajectoryConverter.next_x_vals.size(); ++i) {
