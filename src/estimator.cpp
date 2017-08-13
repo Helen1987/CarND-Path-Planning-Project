@@ -60,8 +60,8 @@ namespace pathplanner {
 
   double Estimator::calculate_cost(vector<Vehicle::snapshot> trajectory,
       map<int, vector<Vehicle::prediction>>predictions, string state, bool verbose/*=false*/) {
-    /*TrajectoryData trajectory_data = get_helper_data(trajectory, predictions);
-    double cost = 0.0;
+    TrajectoryData trajectory_data = get_helper_data(trajectory, predictions);
+    /*double cost = 0.0;
     vector<DelegateType> delegates = { inefficiency_cost, collision_cost, buffer_cost, change_lane_cost };
     for (auto cf : delegates) {
       new_cost = cf(vehicle, trajectory, predictions, trajectory_data);
@@ -79,7 +79,7 @@ namespace pathplanner {
 
   Estimator::TrajectoryData Estimator::get_helper_data(vector<Vehicle::snapshot> trajectory,
     map<int, vector<Vehicle::prediction>>predictions) {
-    TrajectoryData data;
+    TrajectoryData data = TrajectoryData();
 
     vector<Vehicle::snapshot> t = trajectory;
     Vehicle::snapshot current_snapshot = t[0];
@@ -96,6 +96,7 @@ namespace pathplanner {
     vector<double> accels = {};
     data.closest_approach = 999999;
 
+    data.collides = collision();
     data.collides.hasCollision = false;
     Vehicle::snapshot last_snap = trajectory[0];
     map<int, vector<Vehicle::prediction>> filtered = filter_predictions_by_lane(predictions, data.proposed_lane);
@@ -122,7 +123,7 @@ namespace pathplanner {
     }
     auto smallest = min_element(accels.begin(), accels.end());
     data.max_acceleration = *smallest;
-    vector<double> rms_accels;
+    vector<double> rms_accels = {};
     rms_accels.resize(accels.size());
     transform(accels.begin(), accels.end(), rms_accels.begin(), [](double acc) {
       return acc*acc;
@@ -176,6 +177,7 @@ namespace pathplanner {
         filtered[pair.first] = pair.second;
       }
     }
+    return filtered;
   }
 
 }
