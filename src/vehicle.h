@@ -110,7 +110,7 @@ namespace pathplanner {
 
    // void configure(vector<int> road_data);
 
-    string display();
+    void display();
 
     void increment(int dt = 1);
 

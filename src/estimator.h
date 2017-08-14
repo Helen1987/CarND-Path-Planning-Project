@@ -37,7 +37,7 @@ namespace pathplanner {
         collision collides;
       };
 
-      typedef std::function<double(Vehicle vehicle, vector<Vehicle::snapshot> trajectory,
+      typedef std::function<double(const Estimator&, vector<Vehicle::snapshot> trajectory,
         map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data)> DelegateType;
 
       // priority levels for costs
@@ -46,6 +46,7 @@ namespace pathplanner {
       int const REACH_GOAL = pow(10, 5);
       int const COMFORT = pow(10, 4);
       int const EFFICIENCY = pow(10, 2);
+      double const MAX_SPEED = 49.5;
 
       double const DESIRED_BUFFER = 1.5; // timesteps
       int const PLANNING_HORIZON = 2;
@@ -55,17 +56,17 @@ namespace pathplanner {
       double const LANE_WIDTH = 4.0;
       double const MIDDLE_LANE = LANE_WIDTH / 2;
 
-      double change_lane_cost(Vehicle vehicle, vector<Vehicle::snapshot> trajectory,
-        map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data);
+      double change_lane_cost(vector<Vehicle::snapshot> trajectory,
+        map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const;
 
-      double inefficiency_cost(Vehicle vehicle, vector<Vehicle::snapshot> trajectory,
-        map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data);
+      double inefficiency_cost(vector<Vehicle::snapshot> trajectory,
+        map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const;
 
-      double collision_cost(Vehicle vehicle, vector<Vehicle::snapshot> trajectory,
-        map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data);
+      double collision_cost(vector<Vehicle::snapshot> trajectory,
+        map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const;
 
-      double buffer_cost(Vehicle vehicle, vector<Vehicle::snapshot> trajectory,
-        map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data);
+      double buffer_cost(vector<Vehicle::snapshot> trajectory,
+        map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const;
 
       TrajectoryData get_helper_data(vector<Vehicle::snapshot> trajectory,
         map<int, vector<Vehicle::prediction>> predictions);

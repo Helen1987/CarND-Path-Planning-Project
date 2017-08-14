@@ -178,7 +178,7 @@ namespace pathplanner {
     //max_acceleration = road_data[4];
   //}
 
-  string Vehicle::display() {
+  void Vehicle::display() {
     cout << "s:    " << this->s << endl;
     cout << "d: " << this->d << endl;
     cout << "vx:    " << this->dx << endl;

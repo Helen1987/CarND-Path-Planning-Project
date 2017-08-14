@@ -11,8 +11,8 @@ namespace pathplanner {
 
 
 
-  double Estimator::change_lane_cost(Vehicle vehicle, vector<Vehicle::snapshot> trajectory,
-    map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) {
+  double Estimator::change_lane_cost(vector<Vehicle::snapshot> trajectory,
+    map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     /*
     Penalizes lane changes
     */
@@ -20,18 +20,18 @@ namespace pathplanner {
     return COMFORT;
   }
 
-  double Estimator::inefficiency_cost(Vehicle vehicle, vector<Vehicle::snapshot> trajectory,
-    map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) {
+  double Estimator::inefficiency_cost(vector<Vehicle::snapshot> trajectory,
+    map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     double speed = data.avg_speed;
-    double target_speed = vehicle.MAX_SPEED;
+    double target_speed = MAX_SPEED;
     double diff = target_speed - speed;
     double pct = diff / target_speed;
     double multiplier = pow(pct, 2);
     return multiplier * EFFICIENCY;
   }
 
-  double Estimator::collision_cost(Vehicle vehicle, vector<Vehicle::snapshot> trajectory,
-    map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) {
+  double Estimator::collision_cost(vector<Vehicle::snapshot> trajectory,
+    map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     if (data.collides.hasCollision) {
       double time_til_collision = data.collides.step*INTERVAL;
       double exponent = time_til_collision*time_til_collision;
@@ -42,8 +42,8 @@ namespace pathplanner {
     return 0;
   }
 
-  double Estimator::buffer_cost(Vehicle vehicle, vector<Vehicle::snapshot> trajectory,
-    map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) {
+  double Estimator::buffer_cost(vector<Vehicle::snapshot> trajectory,
+    map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     double closest = data.closest_approach;
     if (closest == 0) {
       return 10 * DANGER;
@@ -61,19 +61,22 @@ namespace pathplanner {
   double Estimator::calculate_cost(vector<Vehicle::snapshot> trajectory,
       map<int, vector<Vehicle::prediction>>predictions, string state, bool verbose/*=false*/) {
     TrajectoryData trajectory_data = get_helper_data(trajectory, predictions);
-    /*double cost = 0.0;
-    vector<DelegateType> delegates = { inefficiency_cost, collision_cost, buffer_cost, change_lane_cost };
+    double cost = 0.0;
+    vector<DelegateType> delegates = { (DelegateType)&Estimator::inefficiency_cost,
+      (DelegateType)&Estimator::collision_cost,
+      (DelegateType)&Estimator::buffer_cost,
+      (DelegateType)&Estimator::change_lane_cost };
     for (auto cf : delegates) {
-      new_cost = cf(vehicle, trajectory, predictions, trajectory_data);
+      double new_cost = cf(*this, trajectory, predictions, trajectory_data);
 #ifdef DEBUG
       cout << "has cost " << new_cost << " for lane " << trajectory[trajectory.size()-1].lane << endl;
 #endif // DEBUG
       cost += new_cost;
     }
-    return cost;*/
-    if (state == "KL")
+    return cost;
+    /*if (state == "KL")
       return 0;
-    return 1000;//cost
+    return 1000;//cost*/
   }
 
 
