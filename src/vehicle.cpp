@@ -1,15 +1,23 @@
-#include <iostream>
+#include "helper_functions.h"
 #include "vehicle.h"
+
+#include <iostream>
 #include <iostream>
 #include <math.h>
 #include <map>
 #include <string>
 #include <iterator>
-#include <tuple>
 #include <algorithm>
 #include "estimator.h"
 
+
+
 namespace pathplanner {
+  using namespace helpers;
+
+  vector<double> Vehicle::map_waypoints_s;
+  vector<double> Vehicle::map_waypoints_y;
+  vector<double> Vehicle::map_waypoints_x;
 
   Vehicle::Vehicle(int id, double x, double y, double dx, double dy, double s, double d) {
 
@@ -22,6 +30,7 @@ namespace pathplanner {
     this->d = d;
     this->ddx = 0;
     this->ddy = 0;
+    this->yaw = 0;
     state = "CS";
     max_acceleration = 10;
   }
@@ -74,19 +83,26 @@ namespace pathplanner {
 
   string Vehicle::get_next_state(map<int, vector<prediction>> predictions, int lanes_available) {
     vector<string> states;
-    if (state == "PLCR") {
-      states = vector<string>{ "PLCR", "LCR", "KL" };
+    string PLCR = "PLCR", PLCL = "PLCL", KL = "KL", LCR = "LCR", LCL = "LCL";
+    if (state == PLCR) {
+      states = vector<string>{ PLCR, LCR, KL };
     }
-    else if (state == "PLCL") {
-      states = vector<string>{ "PLCL", "LCL", "KL" };
+    else if (state == PLCL) {
+      states = vector<string>{ PLCL, LCL, KL };
+    }
+    else if (state == LCR) {
+      states = vector<string>{ LCR, KL };
+    }
+    else if (state == LCL) {
+      states = vector<string>{ LCL, KL };
     }
     else {
-      states = vector<string>{ "KL" };
+      states = vector<string>{ KL };
       if (this->d > LANE_WIDTH) {
-        states.push_back("PLCL");
+        states.push_back(PLCL);
       }
       if (this->d < (lanes_available - 1)*LANE_WIDTH) {
-        states.push_back("PLCL");
+        states.push_back(PLCR);
       }
     }
 
@@ -96,7 +112,7 @@ namespace pathplanner {
       Vehicle::estimate estimate = Vehicle::estimate();
       estimate.state = state;
       auto trajectory = trajectory_for_state(state, predictions);
-      estimate.cost = estimator.calculate_cost(trajectory, predictions, state);
+      estimate.cost = estimator.calculate_cost(*this, trajectory, predictions, state);
       costs.push_back(estimate);
     }
 
@@ -146,6 +162,7 @@ namespace pathplanner {
     snapshot_temp.d = this->d;
     snapshot_temp.ddx = this->ddx;
     snapshot_temp.ddy = this->ddy;
+    snapshot_temp.yaw = this->yaw;
     snapshot_temp.state = this->state;
     snapshot_temp.lane = this->lane;
     snapshot_temp.ref_vel = this->ref_vel;
@@ -157,10 +174,13 @@ namespace pathplanner {
     //s = snapshot
     this->s = snapshot.s;
     this->d = snapshot.d;
+    this->x = snapshot.x;
+    this->y = snapshot.y;
     this->dx = snapshot.dx;
     this->dy = snapshot.dy;
     this->ddx = snapshot.ddx;
     this->ddy = snapshot.ddy;
+    this->yaw = snapshot.yaw;
     this->state = snapshot.state;
     this->ref_vel = snapshot.ref_vel;
     this->lane = snapshot.lane;
@@ -179,43 +199,99 @@ namespace pathplanner {
   //}
 
   void Vehicle::display() {
-    cout << "s:    " << this->s << endl;
-    cout << "d: " << this->d << endl;
-    cout << "vx:    " << this->dx << endl;
-    cout << "vy:    " << this->dy << endl;
-    cout << "ax:    " << this->ddx << endl;
-    cout << "ay:    " << this->ddy << endl;
+    cout << "vehicle " << this->id << " info" << endl;
+    cout << "s:    " << this->s;
+    cout << " d: " << this->d;
+    cout << " x:    " << this->x;
+    cout << " y: " << this->y;
+    cout << " yaw: " << this->yaw;
+    cout << " vx:    " << this->dx;
+    cout << " vy:    " << this->dy;
+    cout << " ax:    " << this->ddx;
+    cout << " ay:    " << this->ddy << endl;
   }
 
-  void Vehicle::update_params(double x, double y, double v, double yaw, double s, double d) {
+  void Vehicle::update_params(double x, double y, double v, double yaw, double s, double d, double diff) {
     this->x = x;
     this->y = y;
-    this->dx = v*cos(yaw);
-    this->dy = v*sin(yaw);
+    this->yaw = deg2rad(yaw);
+    double new_vx = v*cos(this->yaw);
+    double new_vy = v*sin(this->yaw);
+    this->ddx = (new_vx - this->dx) / diff;
+    this->ddy = (new_vy - this->dy) / diff;
+    this->dx = new_vx;
+    this->dy = new_vy;
     this->s = s;
     this->d = d;
+    display();
   }
 
-  void Vehicle::increment(int dt /*=1*/) {
-
-    double t = TIME_INTERVAL*dt;
-    this->s += this->dy * t + this->ddy*t*t/2;
-    this->d += this->dx * t + this->ddx*t*t/2;
-    this->dx += this->ddx * t;
-    this->dy += this->ddy * t;
+  void Vehicle::update_yaw(double x, double y, double vx, double vy, double s, double d, double diff) {
+    /*this->yaw = atan2(y - this->y, x - this->x);*/
+    double new_angle = atan2(vy, vx);
+    this->yaw = (abs(new_angle) < 0.1) ? 0 : new_angle;
+    this->x = x;
+    this->y = y;
+    this->ddx = (vx - this->dx) / diff;
+    this->ddy = (vy - this->dy) / diff;
+    this->dx = vx;
+    this->dy = vy;
+    this->s = s;
+    this->d = d;
+    display();
   }
 
-  Vehicle::prediction Vehicle::state_at(int count) {
+  void Vehicle::increment(double t /*=1*/) {
+
+    //double t = TIME_INTERVAL*dt;
+    if (abs(this->ddy) < 0.001) {
+      this->y += this->dy * t;
+    }
+    else {
+      this->y += this->dy * t + this->ddy*t*t / 2;
+      this->dy += this->ddy * t;
+    }
+    if (abs(this->ddx) < 0.001) {
+      this->x += this->dx * t;
+    }
+    else {
+      this->x += this->dx * t + this->ddx*t*t / 2;
+      this->dx += this->ddx * t;
+    }
+    vector<double> frenet = getFrenet(this->x, this->y, this->yaw, Vehicle::map_waypoints_x, Vehicle::map_waypoints_y);
+    this->s = frenet[0];
+    this->d = frenet[1];
+  }
+
+  Vehicle::prediction Vehicle::state_at(double t) {
 
     /*
     Predicts state of vehicle in t seconds (assuming 0 acceleration)
     */
     prediction pred;
-    double t = count*TIME_INTERVAL;
-    pred.s = this->s + this->dy * t + this->ddy * t * t / 2;
-    pred.vy = this->dy + this->ddy * t;
-    pred.d = this->d + this->dx * t + this->ddx * t * t / 2;
-    pred.vx = this->dx + this->ddx * t;
+    //double t = count*TIME_INTERVAL;
+    double x, y;
+    if (abs(this->ddy) < 0.001) {
+      y = this->y + this->dy * t;
+      pred.vy = this->dy;
+    }
+    else {
+      y = this->y + this->dy * t + this->ddy * t * t / 2;
+      pred.vy = this->dy + this->ddy * t;
+    }
+    if (abs(this->ddy) < 0.001) {
+      x = this->x + this->dx * t;
+      pred.vx = this->dx;
+    }
+    else {
+      x = this->x + this->dx * t + this->ddx * t * t / 2;
+      pred.vx = this->dx + this->ddx * t;
+    }
+    vector<double> frenet = getFrenet(x, y, this->yaw, Vehicle::map_waypoints_x, Vehicle::map_waypoints_y);
+    pred.s = frenet[0];
+    pred.d = frenet[1];
+    cout << "vehicle " << this->id << " at: " << t << endl;
+    pred.display();
     return pred;
   }
 
@@ -224,8 +300,8 @@ namespace pathplanner {
     /*
     Simple collision detection.
     */
-    prediction check1 = state_at(at_time);
-    prediction check2 = other.state_at(at_time);
+    prediction check1 = state_at(at_time*TIME_INTERVAL);
+    prediction check2 = other.state_at(at_time*TIME_INTERVAL);
     return (abs(check1.d - check2.d) < LANE_WIDTH) && (abs(check1.s - check2.s) <= SAFE_DISTANCE);
   }
 
@@ -375,12 +451,14 @@ namespace pathplanner {
     }
   }
 
-  vector<Vehicle::prediction> Vehicle::generate_predictions(int horizon = 10) {
+  vector<Vehicle::prediction> Vehicle::generate_predictions(int horizon = 5) {
 
     vector<prediction> predictions;
+    double interval = 5.0;//s
+    //cout << "in 30m: " << interval << " intervals" << endl;
     for (int i = 0; i < horizon; i++)
     {
-      predictions.push_back(state_at(i));
+      predictions.push_back(state_at(i*interval));
     }
     return predictions;
   }

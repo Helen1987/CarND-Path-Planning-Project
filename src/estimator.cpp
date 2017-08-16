@@ -9,15 +9,15 @@
 namespace pathplanner {
   using namespace std;
 
-
-
   double Estimator::change_lane_cost(vector<Vehicle::snapshot> trajectory,
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     /*
     Penalizes lane changes
     */
+    if (data.proposed_lane != data.current_lane)
+      return COMFORT;
 
-    return COMFORT;
+    return 0;
   }
 
   double Estimator::inefficiency_cost(vector<Vehicle::snapshot> trajectory,
@@ -58,21 +58,20 @@ namespace pathplanner {
     return multiplier * DANGER;
   }
 
-  double Estimator::calculate_cost(vector<Vehicle::snapshot> trajectory,
+  double Estimator::calculate_cost(Vehicle vehicle, vector<Vehicle::snapshot> trajectory,
       map<int, vector<Vehicle::prediction>>predictions, string state, bool verbose/*=false*/) {
     TrajectoryData trajectory_data = get_helper_data(trajectory, predictions);
+    trajectory_data.current_lane = vehicle.lane;
+
     double cost = 0.0;
-    vector<DelegateType> delegates = { (DelegateType)&Estimator::inefficiency_cost,
-      (DelegateType)&Estimator::collision_cost,
-      (DelegateType)&Estimator::buffer_cost,
-      (DelegateType)&Estimator::change_lane_cost };
     for (auto cf : delegates) {
       double new_cost = cf(*this, trajectory, predictions, trajectory_data);
-#ifdef DEBUG
+
       cout << "has cost " << new_cost << " for lane " << trajectory[trajectory.size()-1].lane << endl;
-#endif // DEBUG
+
       cost += new_cost;
     }
+    cout << "has cost " << cost << " for state " << state << endl;
     return cost;
     /*if (state == "KL")
       return 0;

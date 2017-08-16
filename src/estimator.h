@@ -17,7 +17,7 @@ namespace pathplanner {
 
       virtual ~Estimator() {}
 
-      double calculate_cost(vector<Vehicle::snapshot> trajectory,
+      double calculate_cost(Vehicle vehicle, vector<Vehicle::snapshot> trajectory,
         map<int, vector<Vehicle::prediction>>predictions, string state, bool verbose = false);
 
 
@@ -30,6 +30,7 @@ namespace pathplanner {
       struct TrajectoryData
       {
         int proposed_lane;
+        int current_lane;
         double avg_speed;
         double max_acceleration;
         double rms_acceleration;
@@ -39,6 +40,11 @@ namespace pathplanner {
 
       typedef std::function<double(const Estimator&, vector<Vehicle::snapshot> trajectory,
         map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data)> DelegateType;
+
+      vector<DelegateType> delegates = { (DelegateType)&Estimator::inefficiency_cost,
+        (DelegateType)&Estimator::collision_cost,
+        (DelegateType)&Estimator::buffer_cost,
+        (DelegateType)&Estimator::change_lane_cost };
 
       // priority levels for costs
       int const COLLISION = pow(10, 6);

@@ -5,15 +5,18 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+#include <chrono>
 #include "Eigen-3.3/Eigen/Core"
 #include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
 #include "libs/spline.h"
-#include "trajectory.h"
 #include "vehicle.h"
+#include "trajectory.h"
+
 
 using namespace std;
 using namespace pathplanner;
+using namespace std::chrono;
 
 // for convenience
 using json = nlohmann::json;
@@ -75,8 +78,16 @@ int main() {
   //double ref_vel = 0.0;//mps
   Trajectory trajectory = Trajectory(map_waypoints_s, map_waypoints_x, map_waypoints_y);
   Vehicle ego_car = Vehicle(-1);
+  map<int, Vehicle*> vehicles;
 
-  h.onMessage([&trajectory, &ego_car,
+  Vehicle::map_waypoints_s = map_waypoints_s;
+  Vehicle::map_waypoints_x = map_waypoints_x;
+  Vehicle::map_waypoints_y = map_waypoints_y;
+
+  milliseconds ms = duration_cast<milliseconds>(
+    system_clock::now().time_since_epoch()
+  );
+  h.onMessage([&trajectory, &ego_car, &vehicles, &ms,
     &map_waypoints_x, &map_waypoints_y, &map_waypoints_s, &map_waypoints_dx, &map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
     uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -84,16 +95,20 @@ int main() {
     // The 2 signifies a websocket event
     //auto sdata = string(data).substr(0, length);
     //cout << sdata << endl;
+    milliseconds new_time = duration_cast<milliseconds>(system_clock::now().time_since_epoch());
     if (length && length > 2 && data[0] == '4' && data[1] == '2') {
 
       auto s = hasData(data);
 
       if (s != "") {
         auto j = json::parse(s);
+        double diff = (double)(new_time - ms).count() / 1000;
+        //cout << "time diff is : " << diff << endl;
 
         string event = j[0].get<string>();
 
         if (event == "telemetry") {
+          ms = new_time;
           // j[1] is the data JSON object
 
           // Main car's localization Data
@@ -117,6 +132,7 @@ int main() {
           trajectory.set_previous_path(previous_path_x, previous_path_y);
 
           json msgJson;
+          //cout << j << endl;
 
           int prev_size = previous_path_x.size();
 
@@ -127,16 +143,40 @@ int main() {
           // [car's unique ID, car's x position in map coordinates, car's y position in map coordinates, 
           // car's x velocity in m/s, car's y velocity in m/s, car's s position in frenet coordinates, 
           // car's d position in frenet coordinates.
-          vector<Vehicle> vehicles;
           map<int, vector<Vehicle::prediction>> predictions;
           for (auto data: sensor_fusion) {
             // [id, x, y, dx, dy, s, d]
-            Vehicle vehicle = Vehicle(data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
-            vector<Vehicle::prediction> car_preds = vehicle.generate_predictions(10);
-            predictions[vehicle.id] = car_preds;
+            Vehicle* vehicle = NULL;
+            if (abs((double)data[3] + (double)data[4]) > 0.001) {// check if car is visible
+              if (vehicles.find(data[0]) == vehicles.end()) {
+
+                vehicle = new Vehicle(data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
+                vehicles[data[0]] = vehicle;
+              }
+              else {
+                vehicle = vehicles[data[0]];
+                (*vehicle).update_yaw(data[1], data[2], data[3], data[4], data[5], data[6], diff);
+                vector<Vehicle::prediction> car_preds = (*vehicle).generate_predictions(5);
+                predictions[(*vehicle).id] = car_preds;
+              }
+              (*vehicle).display();
+            }
+            else if (vehicles.find(data[0]) != vehicles.end()){
+              cout << " remove vehicle: " << data[0] << endl;
+              delete &(*vehicles.find(data[0]));
+              vehicles.erase((int)data[0]);
+            }
+          }
+          if (predictions.size()) {
+            for (auto pair : vehicles) {
+              if (predictions.find(pair.first) == predictions.end()) {
+                delete pair.second;
+                vehicles.erase(pair.first);
+              }
+            }
           }
 
-          ego_car.update_params(car_x, car_y, car_speed, car_yaw, car_s, car_d);
+          ego_car.update_params(car_x, car_y, car_speed, car_yaw, car_s, car_d, diff);
           ego_car.update_state(predictions, 3);
           ego_car.realize_state(predictions);
           //cout << "state: " << ego_car.state << " ref_vel: " << ego_car.ref_vel << " lane: " << ego_car.lane << endl;

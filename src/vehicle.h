@@ -1,9 +1,8 @@
 #ifndef VEHICLE_H
 #define VEHICLE_H
+
 #include <iostream>
 #include <random>
-#include <sstream>
-#include <fstream>
 #include <math.h>
 #include <vector>
 #include <map>
@@ -28,9 +27,7 @@ namespace pathplanner {
     double dy;
     double ddx;
     double ddy;
-
-
-    int leading_vehicle = -1;
+    double yaw;
 
     struct estimate {
       string state;
@@ -43,6 +40,10 @@ namespace pathplanner {
 
   public:
     double const MAX_SPEED = 49.5;
+
+    static vector<double> map_waypoints_x;
+    static vector<double> map_waypoints_y;
+    static vector<double> map_waypoints_s;
 
     int id;
     double s;
@@ -65,6 +66,10 @@ namespace pathplanner {
       bool is_in_lane(int lane) {
         return d < (4.0 * (lane + 1)) && d >(4.0 * lane);
       }
+
+      void display() {
+        cout << "s: " << s << " d: " << d << " vx: " << vx << " vy: " << vy << endl;
+      }
     };
 
     struct snapshot {
@@ -76,6 +81,7 @@ namespace pathplanner {
       double ddy;
       double s;
       double d;
+      double yaw;
       double ref_vel;
       double lane;
       string state;
@@ -104,7 +110,9 @@ namespace pathplanner {
     */
     virtual ~Vehicle();
 
-    void update_params(double x, double y, double v, double yaw, double s, double d);
+    void update_params(double x, double y, double v, double yaw, double s, double d, double diff);
+
+    void update_yaw(double x, double y, double vx, double vy, double s, double d, double diff);
 
     void update_state(map<int, vector<prediction>> predictions, int lanes_available);
 
@@ -112,9 +120,9 @@ namespace pathplanner {
 
     void display();
 
-    void increment(int dt = 1);
+    void increment(double t = 5.0);
 
-    prediction state_at(int count);
+    prediction state_at(double t);
 
     bool collides_with(Vehicle other, int at_time);
 
