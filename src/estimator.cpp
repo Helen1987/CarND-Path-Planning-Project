@@ -67,11 +67,11 @@ namespace pathplanner {
     for (auto cf : delegates) {
       double new_cost = cf(*this, trajectory, predictions, trajectory_data);
 
-      cout << "has cost " << new_cost << " for lane " << trajectory[trajectory.size()-1].lane << endl;
+      //cout << "has cost " << new_cost << " for lane " << trajectory[trajectory.size()-1].lane << endl;
 
       cost += new_cost;
     }
-    cout << "has cost " << cost << " for state " << state << endl;
+    //cout << "has cost " << cost << " for state " << state << endl;
     return cost;
     /*if (state == "KL")
       return 0;

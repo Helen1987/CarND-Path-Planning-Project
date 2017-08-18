@@ -42,6 +42,13 @@ namespace pathplanner {
   }
 
   void Trajectory::update_trajectory(vector<double> ptsx, vector<double> ptsy, double ref_vel) {
+    convert2Local(ptsx, ptsy);
+
+    // create a spline
+    tk::spline s;
+    // set x, y points to the spline
+    s.set_points(ptsx, ptsy);
+
     next_x_vals.clear();
     next_y_vals.clear();
 
@@ -51,12 +58,6 @@ namespace pathplanner {
       next_y_vals.push_back(previous_path_y[i]);
     }
 
-    convert2Local(ptsx, ptsy);
-
-    // create a spline
-    tk::spline s;
-    // set x, y points to the spline
-    s.set_points(ptsx, ptsy);
 
     // calculate how to break up spline points so that we travel at our ddesired reference velocity
     // we have local coordinates here
@@ -67,8 +68,9 @@ namespace pathplanner {
     double x_add_on = 0;
 
     // fill up the rest planner after filling it with the previous points, here we will always output 50 points
+    //
+    double N = target_dist / (INTERVAL*convert2mps(ref_vel));
     for (int i = 1; i <= 50 - previous_path_x.size(); ++i) {
-      double N = target_dist / (INTERVAL*convert2mps(ref_vel));
       double x_point = x_add_on + (target_x) / N;
       double y_point = s(x_point);
 
@@ -80,6 +82,13 @@ namespace pathplanner {
       next_x_vals.push_back(point.x);
       next_y_vals.push_back(point.y);
     }
+
+    /*for (double item : next_x_vals) {
+      cout << "xl: " << item << " ";
+    }
+    for (double item : next_y_vals) {
+      cout << "yl: " << item << " ";
+    }*/
   }
 
   void Trajectory::generate_trajectory(double car_s, double car_x, double car_y, double car_yaw, int lane, double ref_vel) {
@@ -135,6 +144,12 @@ namespace pathplanner {
     ptsy.push_back(next_wp1[1]);
     ptsy.push_back(next_wp2[1]);
 
+    /*for (double item : ptsx) {
+      cout << "xl: " << item << " " << endl;
+    }
+    for (double item : ptsy) {
+      cout << "yl: " << item << " " << endl;
+    }*/
 
     update_trajectory(ptsx, ptsy, ref_vel);
   }

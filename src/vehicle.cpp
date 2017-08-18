@@ -30,7 +30,8 @@ namespace pathplanner {
     this->d = d;
     this->ddx = 0;
     this->ddy = 0;
-    this->yaw = 0;
+    double angle = atan2(dy, dx);
+    this->yaw = (abs(angle) < 0.1) ? 0 : angle;
     state = "CS";
     max_acceleration = 10;
   }
@@ -214,16 +215,23 @@ namespace pathplanner {
   void Vehicle::update_params(double x, double y, double v, double yaw, double s, double d, double diff) {
     this->x = x;
     this->y = y;
-    this->yaw = deg2rad(yaw);
+    this->yaw = abs(deg2rad(yaw)) < 0.1 ? 0 : deg2rad(yaw);
     double new_vx = v*cos(this->yaw);
     double new_vy = v*sin(this->yaw);
     this->ddx = (new_vx - this->dx) / diff;
+    if (this->ddx < 0.01) {
+      this->ddx = 0;
+    }
     this->ddy = (new_vy - this->dy) / diff;
+    if (this->ddy) {
+      this->ddy = 0;
+    }
     this->dx = new_vx;
     this->dy = new_vy;
     this->s = s;
     this->d = d;
-    display();
+    updates++;
+    //display();
   }
 
   void Vehicle::update_yaw(double x, double y, double vx, double vy, double s, double d, double diff) {
@@ -233,12 +241,18 @@ namespace pathplanner {
     this->x = x;
     this->y = y;
     this->ddx = (vx - this->dx) / diff;
+    if (this->ddx < 0.01) {
+      this->ddx = 0;
+    }
     this->ddy = (vy - this->dy) / diff;
+    if (this->ddy < 0.01) {
+      this->ddy = 0;
+    }
     this->dx = vx;
     this->dy = vy;
     this->s = s;
     this->d = d;
-    display();
+    //display();
   }
 
   void Vehicle::increment(double t /*=1*/) {
@@ -290,7 +304,7 @@ namespace pathplanner {
     vector<double> frenet = getFrenet(x, y, this->yaw, Vehicle::map_waypoints_x, Vehicle::map_waypoints_y);
     pred.s = frenet[0];
     pred.d = frenet[1];
-    cout << "vehicle " << this->id << " at: " << t << endl;
+    //cout << "vehicle " << this->id << " at: " << t << endl;
     pred.display();
     return pred;
   }
@@ -372,6 +386,8 @@ namespace pathplanner {
           //double check_speed = sqrt(pred.vx*pred.vx + pred.vy*pred.vy);
 
           if ((pred.s > s) && (pred.s - s) < SAFE_DISTANCE) {
+            //cout << "pred d: " << pred.d << " my lane: " << lane << endl;
+            //cout << "pred s: " << pred.s << " my s: " << s << endl;
             too_close = true;
           }
         }
@@ -379,11 +395,15 @@ namespace pathplanner {
     }
     if (too_close) {
       ref_vel -= SPEED_INCREMENT;
+      if (ref_vel < 0) {
+        ref_vel = 0;
+      }
     }
     else if (ref_vel < MAX_SPEED) {
       ref_vel += SPEED_INCREMENT;
       //cout << "_update_ref_speed_for_lane" << ref_vel << endl;
     }
+    cout << "upd ref speed vel " << ref_vel << endl;
   }
 
   void Vehicle::realize_keep_lane(map<int, vector<prediction>> predictions) {
@@ -454,7 +474,7 @@ namespace pathplanner {
   vector<Vehicle::prediction> Vehicle::generate_predictions(int horizon = 5) {
 
     vector<prediction> predictions;
-    double interval = 5.0;//s
+    double interval = 1.0;//s
     //cout << "in 30m: " << interval << " intervals" << endl;
     for (int i = 0; i < horizon; i++)
     {

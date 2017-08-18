@@ -87,7 +87,7 @@ int main() {
   milliseconds ms = duration_cast<milliseconds>(
     system_clock::now().time_since_epoch()
   );
-  h.onMessage([&trajectory, &ego_car, &vehicles, &ms,
+  h.onMessage([&trajectory, &ego_car, &max_s, &ms, &vehicles,
     &map_waypoints_x, &map_waypoints_y, &map_waypoints_s, &map_waypoints_dx, &map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
     uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
@@ -139,7 +139,8 @@ int main() {
           if (prev_size > 0) {
             car_s = end_path_s;
           }
-
+          //cout << "ego car: " << endl;
+          //ego_car.display();
           // [car's unique ID, car's x position in map coordinates, car's y position in map coordinates, 
           // car's x velocity in m/s, car's y velocity in m/s, car's s position in frenet coordinates, 
           // car's d position in frenet coordinates.
@@ -147,7 +148,7 @@ int main() {
           for (auto data: sensor_fusion) {
             // [id, x, y, dx, dy, s, d]
             Vehicle* vehicle = NULL;
-            if (abs((double)data[3] + (double)data[4]) > 0.001) {// check if car is visible
+            if (((double)data[5] < max_s) && ((double)data[6] > 0)) {// check if car is visible
               if (vehicles.find(data[0]) == vehicles.end()) {
 
                 vehicle = new Vehicle(data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
@@ -156,22 +157,19 @@ int main() {
               else {
                 vehicle = vehicles[data[0]];
                 (*vehicle).update_yaw(data[1], data[2], data[3], data[4], data[5], data[6], diff);
-                vector<Vehicle::prediction> car_preds = (*vehicle).generate_predictions(5);
-                predictions[(*vehicle).id] = car_preds;
+                if ((*vehicle).shouldPredict()) {
+                  vector<Vehicle::prediction> car_preds = (*vehicle).generate_predictions(5);
+                  predictions[(*vehicle).id] = car_preds;
+                }
               }
-              (*vehicle).display();
+              //(*vehicle).display();
             }
-            else if (vehicles.find(data[0]) != vehicles.end()){
-              cout << " remove vehicle: " << data[0] << endl;
-              delete &(*vehicles.find(data[0]));
-              vehicles.erase((int)data[0]);
-            }
-          }
-          if (predictions.size()) {
-            for (auto pair : vehicles) {
-              if (predictions.find(pair.first) == predictions.end()) {
-                delete pair.second;
-                vehicles.erase(pair.first);
+            else {
+              auto it = vehicles.find(data[0]);
+              if (it != vehicles.end()) {
+                cout << " remove vehicle: " << data[0] << endl;
+                delete (*it).second;
+                vehicles.erase((int)data[0]);
               }
             }
           }
@@ -182,16 +180,6 @@ int main() {
           //cout << "state: " << ego_car.state << " ref_vel: " << ego_car.ref_vel << " lane: " << ego_car.lane << endl;
 
           trajectory.generate_trajectory(car_s, car_x, car_y, car_yaw, ego_car.lane, ego_car.ref_vel);
-
-          /*cout << endl << "x path:" << endl;
-          for (int i = 0; i < trajectoryConverter.next_x_vals.size(); ++i) {
-            cout << trajectoryConverter.next_x_vals[i] << " ";
-          }
-          cout << endl;
-          cout << "y path:" << endl;
-          for (int i = 0; i < trajectoryConverter.next_y_vals.size(); ++i) {
-            cout << trajectoryConverter.next_y_vals[i] << " ";
-          }*/
 
           msgJson["next_x"] = trajectory.next_x_vals;
           msgJson["next_y"] = trajectory.next_y_vals;

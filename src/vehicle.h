@@ -29,6 +29,8 @@ namespace pathplanner {
     double ddy;
     double yaw;
 
+    int updates = 0;
+
     struct estimate {
       string state;
       double cost;
@@ -68,7 +70,7 @@ namespace pathplanner {
       }
 
       void display() {
-        cout << "s: " << s << " d: " << d << " vx: " << vx << " vy: " << vy << endl;
+        //cout << "s: " << s << " d: " << d << " vx: " << vx << " vy: " << vy << endl;
       }
     };
 
@@ -95,6 +97,10 @@ namespace pathplanner {
       }
     };
 
+    bool shouldPredict() {
+      return updates > 10;
+    }
+
     int preferred_buffer = 6; // impacts "keep lane" behavior.
 
     int max_acceleration;
@@ -120,7 +126,7 @@ namespace pathplanner {
 
     void display();
 
-    void increment(double t = 5.0);
+    void increment(double t = 1.0);
 
     prediction state_at(double t);
 
