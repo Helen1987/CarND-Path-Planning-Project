@@ -378,17 +378,14 @@ namespace pathplanner {
   void Vehicle::_update_ref_speed_for_lane(map<int, vector<prediction>> predictions, int lane, int s) {
     bool too_close = false;
     for (auto pair : predictions) {
-      vector<prediction> preds = pair.second;
-      for (prediction pred : preds) {
-        if (is_in_the_same_lane(pred.d)) {
+      prediction pred = pair.second[0];
 
-          //double check_speed = sqrt(pred.vx*pred.vx + pred.vy*pred.vy);
+      if (is_in_the_same_lane(pred.d)) {
 
-          if ((pred.s > s) && (pred.s - s) < SAFE_DISTANCE) {
-            //cout << "pred d: " << pred.d << " my lane: " << lane << endl;
-            //cout << "pred s: " << pred.s << " my s: " << s << endl;
-            //too_close = true;
-          }
+        if ((pred.s > s) && (pred.s - s) < SAFE_DISTANCE) {
+          cout << "pred d: " << pred.d << " my lane: " << lane << endl;
+          cout << "pred s: " << pred.s << " my s: " << s << endl;
+          too_close = true;
         }
       }
     }
