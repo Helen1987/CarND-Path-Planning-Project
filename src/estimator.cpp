@@ -45,7 +45,7 @@ namespace pathplanner {
   double Estimator::buffer_cost(vector<Vehicle::snapshot> trajectory,
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     double closest = data.closest_approach;
-    if (closest == 0) {
+    if (closest < 1) {
       return 10 * DANGER;
     }
 
@@ -94,22 +94,22 @@ namespace pathplanner {
 
     //end_distance_to_goal = vehicle.goal_s - last.s
     //end_lanes_from_goal = abs(vehicle.goal_lane - last.lane)
-    double dt = trajectory.size()*0.5;
+    double dt = trajectory.size()*PREDICTION_INTERVAL;
     data.proposed_lane = first.lane;
-    data.avg_speed = (last.get_speed() - current_snapshot.get_speed()) / dt;
+    data.avg_speed = (last.get_speed()*dt - current_snapshot.get_speed()) / dt; // (v2*dt-v1*1)/dt
 
     // initialize a bunch of variables
-    vector<double> accels = {};
+    //vector<double> accels = {};
     data.closest_approach = 999999;
 
     data.collides = collision();
     data.collides.hasCollision = false;
-    Vehicle::snapshot last_snap = trajectory[0];
+    //Vehicle::snapshot last_snap = trajectory[0];
     map<int, vector<Vehicle::prediction>> filtered = filter_predictions_by_lane(predictions, data.proposed_lane);
 
     for (int i = 1; i < PLANNING_HORIZON + 1; ++i) {
       Vehicle::snapshot snap = trajectory[i];
-      accels.push_back(snap.get_acceleration());
+      //accels.push_back(snap.get_acceleration());
 
       for (auto pair : filtered) {
         Vehicle::prediction state = pair.second[i];
@@ -124,10 +124,10 @@ namespace pathplanner {
             data.closest_approach = dist;
           }
         }
-        last_snap = snap;
+        //last_snap = snap;
       }
     }
-    auto smallest = min_element(accels.begin(), accels.end());
+    /*auto smallest = min_element(accels.begin(), accels.end());
     data.max_acceleration = *smallest;
     vector<double> rms_accels = {};
     rms_accels.resize(accels.size());
@@ -135,7 +135,7 @@ namespace pathplanner {
       return acc*acc;
     });
     int num_accels = rms_accels.size();
-    data.rms_acceleration = accumulate(rms_accels.begin(), rms_accels.end(), 0) / num_accels;
+    data.rms_acceleration = accumulate(rms_accels.begin(), rms_accels.end(), 0) / num_accels;*/
 
     return data;
   }
@@ -144,7 +144,16 @@ namespace pathplanner {
   bool Estimator::check_collision(Vehicle::snapshot snap, double s_previous, double s_now) {
     double s = snap.s;
     double v = snap.get_speed();
-    double v_target = (s_now - s_previous) / INTERVAL;
+    double v_target = (s_now - s_previous) / PREDICTION_INTERVAL;
+    if ((s_previous - s) < 1) {
+      if (v_target > v) {
+        return false;
+      }
+      else {
+        return true;
+      }
+    }
+
     if (s_previous < s) {
       if (s_now >= s) {
         return true;
@@ -160,15 +169,6 @@ namespace pathplanner {
       }
       else {
         return false;
-      }
-    }
-
-    if (s_previous == s) {
-      if (v_target > v) {
-        return false;
-      }
-      else {
-        return true;
       }
     }
 

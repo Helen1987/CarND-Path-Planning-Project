@@ -337,6 +337,14 @@ namespace pathplanner {
     return collider_temp;
   }
 
+  bool Vehicle::is_in_front_of(prediction pred) {
+    return is_in_the_same_lane(pred.d) && pred.s < s;
+  }
+
+  bool Vehicle::is_close_to(prediction pred) {
+    return is_in_the_same_lane(pred.d) && (pred.s > s) && (pred.s - s) < SAFE_DISTANCE;
+  }
+
   void Vehicle::realize_state(map<int, vector<prediction>> predictions) {
 
     /*
@@ -380,13 +388,10 @@ namespace pathplanner {
     for (auto pair : predictions) {
       prediction pred = pair.second[0];
 
-      if (is_in_the_same_lane(pred.d)) {
-
-        if ((pred.s > s) && (pred.s - s) < SAFE_DISTANCE) {
-          cout << "pred d: " << pred.d << " my lane: " << lane << endl;
-          cout << "pred s: " << pred.s << " my s: " << s << endl;
-          too_close = true;
-        }
+      if (is_close_to(pred)) {
+        cout << "pred d: " << pred.d << " my lane: " << lane << endl;
+        cout << "pred s: " << pred.s << " my s: " << s << endl;
+        too_close = true;
       }
     }
     double velocity = get_velocity();
@@ -417,9 +422,7 @@ namespace pathplanner {
       delta = 1;
     }
     this->lane += delta;
-    int lane = this->lane;
-    int s = this->s;
-    _update_ref_speed_for_lane(predictions, lane, s);
+    _update_ref_speed_for_lane(predictions, this->lane, this->s);
   }
 
   void Vehicle::realize_prep_lane_change(map<int, vector<prediction> > predictions, string direction) {
@@ -434,7 +437,7 @@ namespace pathplanner {
     for (auto pair : predictions) {
       int v_id = pair.first;
       vector<prediction> v = pair.second;
-      if (is_in_the_same_lane(v[0].d) && (v[0].s < this->s)) {
+      if (is_in_front_of(v[0])) {
         at_behind.push_back(v);
       }
     }
@@ -454,13 +457,13 @@ namespace pathplanner {
       double delta_v = velocity - target_vel;
       double delta_s = this->s - nearest_behind[0].s;
       //cout << "was vel: " << velocity;
-      if (delta_v < -0.01)
+      if (delta_s < SAFE_DISTANCE && delta_v < -0.01)
       {
         if (abs(delta_v) < SPEED_INCREMENT) {
           velocity += SPEED_INCREMENT;
         }
         else {
-          velocity += 2*SPEED_INCREMENT;
+          velocity += 2 * SPEED_INCREMENT;
         }
         //cout << " realize_prep_lane_change " << ref_vel << endl;
       }

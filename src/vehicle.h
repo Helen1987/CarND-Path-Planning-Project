@@ -77,7 +77,7 @@ namespace pathplanner {
 
     struct collider {
       bool collision; // is there a collision?
-      int  time; // time collision happens
+      int time; // time collision happens
     };
 
     struct prediction {
@@ -158,6 +158,10 @@ namespace pathplanner {
     prediction state_at(double t);
 
     bool collides_with(Vehicle other, int at_time);
+
+    bool is_in_front_of(prediction pred);
+
+    bool is_close_to(prediction pred);
 
     collider will_collide_with(Vehicle other, int timesteps);
 
