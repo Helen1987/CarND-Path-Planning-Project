@@ -57,6 +57,7 @@ namespace pathplanner {
       double const DESIRED_BUFFER = 1.5; // timesteps
       int const PLANNING_HORIZON = 2;
 
+      double const PREDICTION_INTERVAL = 0.5;
       double const INTERVAL = .02;
       double const DISTANCE = 30;
       double const LANE_WIDTH = 4.0;

@@ -92,17 +92,17 @@ namespace pathplanner {
       states = vector<string>{ PLCL, LCL, KL };
     }
     else if (state == LCR) {
-      states = vector<string>{ LCR, KL };
+      states = vector<string>{ KL };
     }
     else if (state == LCL) {
-      states = vector<string>{ LCL, KL };
+      states = vector<string>{ KL };
     }
     else {
       states = vector<string>{ KL };
-      if (this->d > LANE_WIDTH) {
+      if (this->lane > 1) {
         states.push_back(PLCL);
       }
-      if (this->d < (lanes_available - 1)*LANE_WIDTH) {
+      if (this->lane < lanes_available) {
         states.push_back(PLCR);
       }
     }
@@ -127,7 +127,7 @@ namespace pathplanner {
       [](Vehicle::estimate est1, Vehicle::estimate est2) {
       return est1.cost < est2.cost;
     });
-    //cout << "best estimate: " << (*best).cost << " in state " << (*best).state << " speed " << get_velocity() << endl;
+    cout << "best estimate: " << (*best).cost << " in state " << (*best).state << " speed " << get_velocity() << endl;
     return (*best).state;
   }
 
@@ -412,7 +412,7 @@ namespace pathplanner {
 
   void Vehicle::realize_lane_change(map<int, vector<prediction>> predictions, string direction) {
     int delta = -1;
-    if (direction.compare("L") == 0)
+    if (direction.compare("R") == 0)
     {
       delta = 1;
     }
@@ -424,7 +424,7 @@ namespace pathplanner {
 
   void Vehicle::realize_prep_lane_change(map<int, vector<prediction> > predictions, string direction) {
     int delta = -1;
-    if (direction.compare("L") == 0)
+    if (direction.compare("R") == 0)
     {
       delta = 1;
     }
