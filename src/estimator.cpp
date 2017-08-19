@@ -32,19 +32,19 @@ namespace pathplanner {
 
   double Estimator::collision_cost(vector<Vehicle::snapshot> trajectory,
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
-    if (data.collides.hasCollision) {
+    /*if (data.collides.hasCollision) {
       double time_til_collision = data.collides.step*INTERVAL;
       double exponent = time_til_collision*time_til_collision;
       double mult = exp(-exponent);
 
       return mult * COLLISION;
-    }
+    }*/
     return 0;
   }
 
   double Estimator::buffer_cost(vector<Vehicle::snapshot> trajectory,
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
-    double closest = data.closest_approach;
+    /*double closest = data.closest_approach;
     if (closest == 0) {
       return 10 * DANGER;
     }
@@ -55,12 +55,13 @@ namespace pathplanner {
     }
 
     double multiplier = 1.0 - pow((timesteps_away / DESIRED_BUFFER), 2);
-    return multiplier * DANGER;
+    return multiplier * DANGER;*/
+    return 0;
   }
 
   double Estimator::calculate_cost(Vehicle vehicle, vector<Vehicle::snapshot> trajectory,
       map<int, vector<Vehicle::prediction>>predictions, string state, bool verbose/*=false*/) {
-    TrajectoryData trajectory_data = get_helper_data(trajectory, predictions);
+    /*TrajectoryData trajectory_data = get_helper_data(trajectory, predictions);
     trajectory_data.current_lane = vehicle.lane;
 
     double cost = 0.0;
@@ -71,11 +72,14 @@ namespace pathplanner {
 
       cost += new_cost;
     }
-    //cout << "has cost " << cost << " for state " << state << endl;
-    return cost;
-    /*if (state == "KL")
+    if (state == "PLCR" || state == "PLCL")
+    {
+      //cout << "has cost " << cost << " for state " << state << endl;
+    }
+    return cost;*/
+    if (state == "KL")
       return 0;
-    return 1000;//cost*/
+    return 1000;//cost
   }
 
 
@@ -90,7 +94,7 @@ namespace pathplanner {
 
     //end_distance_to_goal = vehicle.goal_s - last.s
     //end_lanes_from_goal = abs(vehicle.goal_lane - last.lane)
-    double dt = trajectory.size()*INTERVAL;
+    double dt = trajectory.size()*0.5;
     data.proposed_lane = first.lane;
     data.avg_speed = (last.get_speed() - current_snapshot.get_speed()) / dt;
 

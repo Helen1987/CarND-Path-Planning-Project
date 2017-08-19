@@ -173,13 +173,13 @@ int main() {
               }
             }
           }
-
-          ego_car.update_params(car_x, car_y, car_speed, car_yaw, car_s, car_d, diff);
+          //cout << "update ego car " << car_speed << endl;
+          ego_car.update_params(car_x, car_y, car_yaw, car_s, car_d, diff);
           ego_car.update_state(predictions, 3);
           ego_car.realize_state(predictions);
-          //cout << "state: " << ego_car.state << " ref_vel: " << ego_car.ref_vel << " lane: " << ego_car.lane << endl;
+          //cout << "state: " << ego_car.state << " ref_vel: " << ego_car.get_velocity() << " lane: " << ego_car.lane << endl;
 
-          trajectory.generate_trajectory(car_s, car_x, car_y, car_yaw, ego_car.lane, ego_car.ref_vel);
+          trajectory.generate_trajectory(car_s, car_x, car_y, car_yaw, ego_car.lane, ego_car.get_velocity());
 
           msgJson["next_x"] = trajectory.next_x_vals;
           msgJson["next_y"] = trajectory.next_y_vals;

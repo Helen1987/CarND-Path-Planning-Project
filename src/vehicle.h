@@ -18,8 +18,9 @@ namespace pathplanner {
     double const TIME_INTERVAL = 0.02;
     double const LANE_WIDTH = 4.0;
     double const MIDDLE_LANE = LANE_WIDTH/2;
-    double const SAFE_DISTANCE = 10.0;
+    double const SAFE_DISTANCE = 22.0;
     double const SPEED_INCREMENT = .224;
+    double const PREDICTION_INTERVAL = 0.5;
 
     double x;
     double y;
@@ -36,8 +37,25 @@ namespace pathplanner {
       double cost;
     };
 
-    double get_velocity() {
-      return sqrt(dx*dx + dy*dy);
+    void set_velocity(double ref_vel, double diff) {
+      //cout << "new vel: " << ref_vel << " old dx: " << this->dx << " old dy: " << this->dy << endl;
+      double new_vx = ref_vel*cos(this->yaw);
+      double new_vy = ref_vel*sin(this->yaw);
+      this->ddx = (new_vx - this->dx) / diff;
+      if (this->ddx < 0.01) {
+        this->ddx = 0;
+      }
+      this->ddy = (new_vy - this->dy) / diff;
+      if (this->ddy) {
+        this->ddy = 0;
+      }
+      this->dx = new_vx;
+      this->dy = new_vy;
+      //cout << "updated vel: " << get_velocity() << " new dx: " << this->dx << " new dy: " << this->dy << endl;
+    }
+
+    bool is_in_the_same_lane(double other_d) {
+      return (other_d < LANE_WIDTH * (lane + 1)) && (other_d > LANE_WIDTH * lane);
     }
 
   public:
@@ -51,7 +69,10 @@ namespace pathplanner {
     double s;
     double d;
 
-    double ref_vel = 0.0;
+    double get_velocity() {
+      return sqrt(dx*dx + dy*dy);
+    }
+
     int lane = 1;
 
     struct collider {
@@ -84,7 +105,7 @@ namespace pathplanner {
       double s;
       double d;
       double yaw;
-      double ref_vel;
+      //double ref_vel;
       double lane;
       string state;
 
@@ -94,6 +115,12 @@ namespace pathplanner {
 
       double get_acceleration() {
         return sqrt(ddx*ddx + ddy*ddy);
+      }
+
+      void display() {
+        cout << "snapshot: x " << x << " y " << y << " dx " << dx << " dy "
+          << dy << " ddx " << ddx << " ddy " << ddy << " s " << s << " d " << d << " yaw " << yaw
+          << " lane " << lane << " state " << state << endl;
       }
     };
 
@@ -116,7 +143,7 @@ namespace pathplanner {
     */
     virtual ~Vehicle();
 
-    void update_params(double x, double y, double v, double yaw, double s, double d, double diff);
+    void update_params(double x, double y, double yaw, double s, double d, double diff);
 
     void update_yaw(double x, double y, double vx, double vy, double s, double d, double diff);
 
@@ -126,7 +153,7 @@ namespace pathplanner {
 
     void display();
 
-    void increment(double t = 1.0);
+    void increment(double t);
 
     prediction state_at(double t);
 

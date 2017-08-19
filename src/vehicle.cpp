@@ -106,7 +106,10 @@ namespace pathplanner {
         states.push_back(PLCR);
       }
     }
-
+    auto restore_snapshot = this->get_snapshot();
+    //cout << "before estimate: ";
+    //restore_snapshot.display();
+    //display();
     auto costs = vector<Vehicle::estimate>();
     Estimator estimator = Estimator();
     for (auto state : states) {
@@ -116,12 +119,15 @@ namespace pathplanner {
       estimate.cost = estimator.calculate_cost(*this, trajectory, predictions, state);
       costs.push_back(estimate);
     }
-
+    //restore_snapshot.display();
+    //restore_state_from_snapshot(restore_snapshot);
+    //cout << "after estimate: ";
+    //display();
     auto best = min_element(std::begin(costs), std::end(costs),
       [](Vehicle::estimate est1, Vehicle::estimate est2) {
       return est1.cost < est2.cost;
     });
-    //cout << "best estimate: " << (*best).cost << " in state " << (*best).state << endl;
+    //cout << "best estimate: " << (*best).cost << " in state " << (*best).state << " speed " << get_velocity() << endl;
     return (*best).state;
   }
 
@@ -129,6 +135,8 @@ namespace pathplanner {
     int horizon /*=5*/) {
     // remember current state
     auto initial_snapshot = this->get_snapshot();
+    //cout << "init snapshot " << state << endl;
+    //initial_snapshot.display();
 
     // pretend to be in new proposed state
     this->state = state;
@@ -137,8 +145,10 @@ namespace pathplanner {
       restore_state_from_snapshot(initial_snapshot);
       this->state = state;
       realize_state(predictions);
-      //assert 0 <= self.lane < self.lanes_available, "{}".format(self.lane)
-      increment();
+      if (this->d > 12) {
+        cout << "outside the road" << endl;
+      }
+      increment(PREDICTION_INTERVAL);
       trajectory.push_back(this->get_snapshot());
 
       // need to remove first prediction for each vehicle.
@@ -157,7 +167,7 @@ namespace pathplanner {
     Vehicle::snapshot snapshot_temp;
     snapshot_temp.x = this->x;
     snapshot_temp.y = this->y;
-    snapshot_temp.dx = this->dy;
+    snapshot_temp.dx = this->dx;
     snapshot_temp.dy = this->dy;
     snapshot_temp.s = this->s;
     snapshot_temp.d = this->d;
@@ -166,7 +176,7 @@ namespace pathplanner {
     snapshot_temp.yaw = this->yaw;
     snapshot_temp.state = this->state;
     snapshot_temp.lane = this->lane;
-    snapshot_temp.ref_vel = this->ref_vel;
+    //snapshot_temp.ref_vel = this->ref_vel;
 
     return snapshot_temp;
   }
@@ -183,7 +193,7 @@ namespace pathplanner {
     this->ddy = snapshot.ddy;
     this->yaw = snapshot.yaw;
     this->state = snapshot.state;
-    this->ref_vel = snapshot.ref_vel;
+    //this->ref_vel = snapshot.ref_vel;
     this->lane = snapshot.lane;
   }
 
@@ -212,25 +222,13 @@ namespace pathplanner {
     cout << " ay:    " << this->ddy << endl;
   }
 
-  void Vehicle::update_params(double x, double y, double v, double yaw, double s, double d, double diff) {
+  void Vehicle::update_params(double x, double y, double yaw, double s, double d, double diff) {
     this->x = x;
     this->y = y;
     this->yaw = abs(deg2rad(yaw)) < 0.1 ? 0 : deg2rad(yaw);
-    double new_vx = v*cos(this->yaw);
-    double new_vy = v*sin(this->yaw);
-    this->ddx = (new_vx - this->dx) / diff;
-    if (this->ddx < 0.01) {
-      this->ddx = 0;
-    }
-    this->ddy = (new_vy - this->dy) / diff;
-    if (this->ddy) {
-      this->ddy = 0;
-    }
-    this->dx = new_vx;
-    this->dy = new_vy;
+    //set_velocity(v, diff);
     this->s = s;
     this->d = d;
-    updates++;
     //display();
   }
 
@@ -252,10 +250,11 @@ namespace pathplanner {
     this->dy = vy;
     this->s = s;
     this->d = d;
+    ++updates;
     //display();
   }
 
-  void Vehicle::increment(double t /*=1*/) {
+  void Vehicle::increment(double t /*=PREDICTION_INTERVAL*/) {
 
     //double t = TIME_INTERVAL*dt;
     if (abs(this->ddy) < 0.001) {
@@ -305,7 +304,7 @@ namespace pathplanner {
     pred.s = frenet[0];
     pred.d = frenet[1];
     //cout << "vehicle " << this->id << " at: " << t << endl;
-    pred.display();
+    //pred.display();
     return pred;
   }
 
@@ -381,29 +380,33 @@ namespace pathplanner {
     for (auto pair : predictions) {
       vector<prediction> preds = pair.second;
       for (prediction pred : preds) {
-        if (pred.d < (LANE_WIDTH * (lane + 1)) && pred.d >(LANE_WIDTH * lane)) {
+        if (is_in_the_same_lane(pred.d)) {
 
           //double check_speed = sqrt(pred.vx*pred.vx + pred.vy*pred.vy);
 
           if ((pred.s > s) && (pred.s - s) < SAFE_DISTANCE) {
             //cout << "pred d: " << pred.d << " my lane: " << lane << endl;
             //cout << "pred s: " << pred.s << " my s: " << s << endl;
-            too_close = true;
+            //too_close = true;
           }
         }
       }
     }
+    double velocity = get_velocity();
+    //cout << "was vel: " << velocity;
     if (too_close) {
-      ref_vel -= SPEED_INCREMENT;
-      if (ref_vel < 0) {
-        ref_vel = 0;
+      velocity -= SPEED_INCREMENT;
+      if (velocity < 0) {
+        velocity = 0;
       }
     }
-    else if (ref_vel < MAX_SPEED) {
-      ref_vel += SPEED_INCREMENT;
+    else if (velocity < MAX_SPEED) {
+      velocity += SPEED_INCREMENT;
       //cout << "_update_ref_speed_for_lane" << ref_vel << endl;
     }
-    cout << "upd ref speed vel " << ref_vel << endl;
+    //cout << "became vel: " << velocity << endl;
+    set_velocity(velocity, PREDICTION_INTERVAL);
+    //cout << "upd ref speed vel " << velocity << endl;
   }
 
   void Vehicle::realize_keep_lane(map<int, vector<prediction>> predictions) {
@@ -434,7 +437,7 @@ namespace pathplanner {
     for (auto pair : predictions) {
       int v_id = pair.first;
       vector<prediction> v = pair.second;
-      if ((abs(v[0].d - lane) < LANE_WIDTH) && (v[0].s < this->s)) {
+      if (is_in_the_same_lane(v[0].d) && (v[0].s < this->s)) {
         at_behind.push_back(v);
       }
     }
@@ -449,36 +452,39 @@ namespace pathplanner {
           nearest_behind = pred;
         }
       }
-      double target_vel = (nearest_behind[1].s - nearest_behind[0].s)/TIME_INTERVAL;
-      int delta_v = get_velocity() - target_vel;
-      int delta_s = this->s - nearest_behind[0].s;
-      if (abs(delta_v) > 0.01)
+      double target_vel = (nearest_behind[1].s - nearest_behind[0].s) / PREDICTION_INTERVAL;
+      double velocity = get_velocity();
+      double delta_v = velocity - target_vel;
+      double delta_s = this->s - nearest_behind[0].s;
+      //cout << "was vel: " << velocity;
+      if (delta_v < -0.01)
       {
-        int time = -2 * delta_s / delta_v;
-        int velocity;
-        if (time == 0) {
-          velocity = ref_vel;
+        if (abs(delta_v) < SPEED_INCREMENT) {
+          velocity += SPEED_INCREMENT;
         }
         else {
-          velocity = ref_vel + SPEED_INCREMENT;
+          velocity += 2*SPEED_INCREMENT;
         }
-        if (velocity > MAX_SPEED) {
-          velocity = MAX_SPEED;
-        }
-        ref_vel = velocity;
         //cout << " realize_prep_lane_change " << ref_vel << endl;
       }
+      else {
+        velocity += SPEED_INCREMENT;
+      }
+      if (velocity > MAX_SPEED) {
+        velocity = MAX_SPEED;
+      }
+      //cout << " became vel: " << velocity << endl;
+      set_velocity(velocity, PREDICTION_INTERVAL);
     }
   }
 
   vector<Vehicle::prediction> Vehicle::generate_predictions(int horizon = 5) {
 
     vector<prediction> predictions;
-    double interval = 1.0;//s
     //cout << "in 30m: " << interval << " intervals" << endl;
     for (int i = 0; i < horizon; i++)
     {
-      predictions.push_back(state_at(i*interval));
+      predictions.push_back(state_at(i*PREDICTION_INTERVAL));
     }
     return predictions;
   }

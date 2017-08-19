@@ -49,15 +49,11 @@ namespace pathplanner {
     // set x, y points to the spline
     s.set_points(ptsx, ptsy);
 
-    next_x_vals.clear();
-    next_y_vals.clear();
-
     // fill with the previous points from the last time
     for (int i = 0; i < previous_path_x.size(); ++i) {
       next_x_vals.push_back(previous_path_x[i]);
       next_y_vals.push_back(previous_path_y[i]);
     }
-
 
     // calculate how to break up spline points so that we travel at our ddesired reference velocity
     // we have local coordinates here
@@ -94,8 +90,16 @@ namespace pathplanner {
   void Trajectory::generate_trajectory(double car_s, double car_x, double car_y, double car_yaw, int lane, double ref_vel) {
     // Create a list of widly spaced waypoints (x,y), evenly spaced at 30 m
     // Later we will interpolate these waypoints with a spline and fill it in with more points tha control speed
+    next_x_vals.clear();
+    next_y_vals.clear();
+
     vector<double> ptsx;
     vector<double> ptsy;
+    //cout << "ref_vel: " << ref_vel << endl;
+    if (abs(ref_vel) < 0.001) {
+      cout << "car stopped" << endl;
+      return;
+    }
 
     ref_x = car_x;
     ref_y = car_y;
