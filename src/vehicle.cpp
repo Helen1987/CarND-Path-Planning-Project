@@ -132,7 +132,7 @@ namespace pathplanner {
       return est1.cost < est2.cost;
     });
     //if ((*best).state != KL) {
-      cout << "best estimate: " << (*best).cost << " in state " << (*best).state << " speed " << get_velocity() << endl;
+      //cout << "best estimate: " << (*best).cost << " in state " << (*best).state << " speed " << get_velocity() << endl;
     //}
     return (*best).state;
   }
@@ -316,34 +316,12 @@ namespace pathplanner {
     return pred;
   }
 
-  /*bool Vehicle::collides_with(Vehicle other, int at_time) {
-
-    prediction check1 = state_at(at_time*TIME_INTERVAL);
-    prediction check2 = other.state_at(at_time*TIME_INTERVAL);
-    return (abs(check1.d - check2.d) < LANE_WIDTH) && (abs(check1.s - check2.s) <= SAFE_DISTANCE);
-  }
-
-  Vehicle::collider Vehicle::will_collide_with(Vehicle other, int timesteps) {
-
-    Vehicle::collider collider_temp;
-    collider_temp.collision = false;
-    collider_temp.time = -1;
-
-    for (int t = 0; t < timesteps + 1; t++)
-    {
-      if (collides_with(other, t))
-      {
-        collider_temp.collision = true;
-        collider_temp.time = t;
-        return collider_temp;
-      }
-    }
-
-    return collider_temp;
-  }*/
-
   bool Vehicle::is_in_front_of(prediction pred) {
     return pred.is_in_lane(proposed_lane) && pred.s < s;
+  }
+
+  bool Vehicle::is_behind_of(prediction pred) {
+    return pred.is_in_lane(proposed_lane) && pred.s > s && (pred.s - s) < 40;
   }
 
   bool Vehicle::is_close_to(prediction pred) {
@@ -391,8 +369,15 @@ namespace pathplanner {
 
   void Vehicle::_update_ref_speed_for_lane(map<int, vector<prediction>> predictions, int lane, int s, bool verbosity) {
     bool too_close = false, danger = false;
+    double max_speed = MAX_SPEED;
     for (auto pair : predictions) {
       prediction pred = pair.second[0];
+      if (is_behind_of(pred) && pred.get_velocity() < max_speed) {
+        cout << "max speed updated to: " << pred.get_velocity() << endl;
+        pred.display();
+        // follow the car behavior
+        max_speed = pred.get_velocity() - 2*SPEED_INCREMENT;
+      }
 
       if (is_close_to(pred)) {
         if (verbosity) {
@@ -408,15 +393,17 @@ namespace pathplanner {
     double velocity = get_velocity();
     //cout << "was vel: " << velocity;
     if (too_close) {
-      velocity -= SPEED_INCREMENT;
       if (danger) {
-        velocity -= 0.5*SPEED_INCREMENT;
+        velocity -= SPEED_INCREMENT;
+      }
+      else if (velocity > max_speed) {
+        velocity -= SPEED_INCREMENT;
       }
       if (velocity < 0) {
         velocity = 0;
       }
     }
-    else if (velocity < MAX_SPEED) {
+    else if (velocity < max_speed) {
       velocity += SPEED_INCREMENT;
       //cout << "_update_ref_speed_for_lane" << ref_vel << endl;
     }

@@ -117,10 +117,11 @@ namespace pathplanner {
 
     if (prev_size < 2 || ref_vel < MIN_SPEED) {
       car_yaw = 0;
+      ref_yaw = deg2rad(car_yaw);
       // Use two points that make the path tangent to the car
       double prev_car_x = car_x - cos(car_yaw);
       double prev_car_y = car_y - sin(car_yaw);
-      ref_yaw = deg2rad(car_yaw);
+      
 
       ptsx.push_back(prev_car_x);
       ptsx.push_back(car_x);

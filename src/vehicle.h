@@ -20,7 +20,7 @@ namespace pathplanner {
     double const MIDDLE_LANE = LANE_WIDTH/2;
     double const SAFE_DISTANCE = 30.0;
     double const TOO_SHORT_DISTANCE = 15.0;
-    double const SPEED_INCREMENT = .156;
+    double const SPEED_INCREMENT = .224;
     double const PREDICTION_INTERVAL = 0.5;
     //double const MANOEUVRE = 10;
     //double const MANOEUVRE = 6;
@@ -92,6 +92,10 @@ namespace pathplanner {
 
       bool is_in_lane(int lane) {
         return d < (4.0 * (lane + 1)) && d >(4.0 * lane);
+      }
+
+      double get_velocity() {
+        return sqrt(vx*vx + vy*vy);
       }
 
       void display() {
@@ -166,6 +170,8 @@ namespace pathplanner {
     //bool collides_with(Vehicle other, int at_time);
 
     bool is_in_front_of(prediction pred);
+
+    bool is_behind_of(prediction pred);
 
     bool is_close_to(prediction pred);
 
