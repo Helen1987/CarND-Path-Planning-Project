@@ -46,6 +46,9 @@ namespace pathplanner {
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     double closest = data.prop_closest_approach;
     cout << "prop closest " << closest << endl;
+    if (closest > 80) {
+      return 0.0;
+    }
     double multiplier = (MAX_DISTANCE - closest) / MAX_DISTANCE;
     return multiplier * EFFICIENCY;
   }
@@ -111,6 +114,7 @@ namespace pathplanner {
 
     data.collides = collision();
     data.collides.hasCollision = false;
+    bool checkCollisions = data.current_lane != data.proposed_lane;
     //Vehicle::snapshot last_snap = trajectory[0];
     map<int, vector<Vehicle::prediction>> filtered = filter_predictions_by_lane(predictions, data.proposed_lane);
     map<int, vector<Vehicle::prediction>> filtered_actual_lane = filter_predictions_by_lane(predictions, data.current_lane);
@@ -123,11 +127,13 @@ namespace pathplanner {
 
       for (auto pair : filtered) {
         Vehicle::prediction state = pair.second[i];
-        //Vehicle::prediction last_state = pair.second[i - 1];
-        bool vehicle_collides = check_collision(snap, state, checkstate);
-        if (vehicle_collides) {
-          data.collides.hasCollision = true;
-          data.collides.step = i;
+        if (checkCollisions) {
+          //Vehicle::prediction last_state = pair.second[i - 1];
+          bool vehicle_collides = check_collision(snap, state, checkstate);
+          if (vehicle_collides) {
+            data.collides.hasCollision = true;
+            data.collides.step = i;
+          }
         }
         double dist = state.s - snap.s;
         if (dist > 0 && dist < data.prop_closest_approach) {
@@ -143,14 +149,15 @@ namespace pathplanner {
 
       for (auto pair : filtered_actual_lane) {
         Vehicle::prediction state = pair.second[i];
+        // do not check collisions on actual line
         //Vehicle::prediction last_state = pair.second[i - 1];
-        bool vehicle_collides = check_collision(snap, state, checkstate);
+        /*bool vehicle_collides = check_collision(snap, state, checkstate);
         if (vehicle_collides) {
           data.collides.hasCollision = true;
           if (data.collides.step > i) {
             data.collides.step = i;
           }
-        }
+        }*/
         double dist = state.s - snap.s;
         if (dist > 0 && dist < data.actual_closest_approach) {
           data.actual_closest_approach = dist;
@@ -219,9 +226,9 @@ namespace pathplanner {
     map<int, vector<Vehicle::prediction>> predictions, int lane) {
     map<int, vector<Vehicle::prediction>> filtered = {};
     for (auto pair: predictions) {
-      pair.second[0].display();
+      //pair.second[0].display();
       if (pair.second[0].is_in_lane(lane)) {
-        cout << "in lane: " << lane << endl;
+        //cout << "in lane: " << lane << endl;
         filtered[pair.first] = pair.second;
       }
       else {

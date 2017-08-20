@@ -37,6 +37,7 @@ namespace pathplanner {
       double const DISTANCE = 30;
       double const LANE_WIDTH = 4;
       double const MIDDLE_LANE = LANE_WIDTH/2;
+      double const MIN_SPEED = 0.3;
 
       vector<double> map_waypoints_x;
       vector<double> map_waypoints_y;

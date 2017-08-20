@@ -410,7 +410,7 @@ namespace pathplanner {
     if (too_close) {
       velocity -= SPEED_INCREMENT;
       if (danger) {
-        velocity -= SPEED_INCREMENT;
+        velocity -= 0.5*SPEED_INCREMENT;
       }
       if (velocity < 0) {
         velocity = 0;

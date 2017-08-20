@@ -44,6 +44,13 @@ namespace pathplanner {
   void Trajectory::update_trajectory(vector<double> ptsx, vector<double> ptsy, double ref_vel) {
     convert2Local(ptsx, ptsy);
 
+    /*for (double item : ptsx) {
+      cout << "xl: " << item << " " << endl;
+    }
+    for (double item : ptsy) {
+      cout << "yl: " << item << " " << endl;
+    }*/
+
     // create a spline
     tk::spline s;
     // set x, y points to the spline
@@ -90,13 +97,14 @@ namespace pathplanner {
   void Trajectory::generate_trajectory(double car_s, double car_x, double car_y, double car_yaw, int lane, double ref_vel) {
     // Create a list of widly spaced waypoints (x,y), evenly spaced at 30 m
     // Later we will interpolate these waypoints with a spline and fill it in with more points tha control speed
+    cout << "generate vel:" << ref_vel << endl;
     next_x_vals.clear();
     next_y_vals.clear();
 
     vector<double> ptsx;
     vector<double> ptsy;
     //cout << "ref_vel: " << ref_vel << endl;
-    if (abs(ref_vel) < 0.001) {
+    if (abs(ref_vel) < 0.1) {
       cout << "car stopped" << endl;
       return;
     }
@@ -107,10 +115,12 @@ namespace pathplanner {
 
     int prev_size = previous_path_x.size();
 
-    if (prev_size < 2) {
+    if (prev_size < 2 || ref_vel < MIN_SPEED) {
+      car_yaw = 0;
       // Use two points that make the path tangent to the car
       double prev_car_x = car_x - cos(car_yaw);
       double prev_car_y = car_y - sin(car_yaw);
+      ref_yaw = deg2rad(car_yaw);
 
       ptsx.push_back(prev_car_x);
       ptsx.push_back(car_x);
