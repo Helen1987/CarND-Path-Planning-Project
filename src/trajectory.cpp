@@ -97,7 +97,6 @@ namespace pathplanner {
   void Trajectory::generate_trajectory(double car_s, double car_x, double car_y, double car_yaw, int lane, double ref_vel) {
     // Create a list of widly spaced waypoints (x,y), evenly spaced at 30 m
     // Later we will interpolate these waypoints with a spline and fill it in with more points tha control speed
-    cout << "generate vel:" << ref_vel << endl;
     next_x_vals.clear();
     next_y_vals.clear();
 

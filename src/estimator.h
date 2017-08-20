@@ -61,10 +61,10 @@ namespace pathplanner {
 
       double const PREDICTION_INTERVAL = 0.5;
       double const INTERVAL = .02;
-      double const DISTANCE = 30;
+      //double const DISTANCE = 30;
       double const LANE_WIDTH = 4.0;
       double const MIDDLE_LANE = LANE_WIDTH / 2;
-      double const MANOEUVRE = 12;
+      double const MANOEUVRE = 5;
       double const MAX_DISTANCE = 999999;
 
       double change_lane_cost(vector<Vehicle::snapshot> trajectory,

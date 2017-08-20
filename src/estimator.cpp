@@ -46,7 +46,7 @@ namespace pathplanner {
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     double closest = data.prop_closest_approach;
     //cout << "prop closest " << closest << endl;
-    if (closest > 80) {
+    if (closest > 65) {
       return 0.0;
     }
     double multiplier = (MAX_DISTANCE - closest) / MAX_DISTANCE;
@@ -110,15 +110,15 @@ namespace pathplanner {
     data.collides.hasCollision = false;
     bool checkCollisions = data.current_lane != data.proposed_lane;
     //Vehicle::snapshot last_snap = trajectory[0];
-    map<int, vector<Vehicle::prediction>> filtered = filter_predictions_by_lane(predictions, data.proposed_lane);
-    map<int, vector<Vehicle::prediction>> filtered_actual_lane = filter_predictions_by_lane(predictions, data.current_lane);
+    map<int, vector<Vehicle::prediction>> cars_in_proposed_lane = filter_predictions_by_lane(predictions, data.proposed_lane);
+    map<int, vector<Vehicle::prediction>> cars_in_actual_lane = filter_predictions_by_lane(predictions, data.current_lane);
 
     //cout << checkstate << " state esimation" << endl;
     //cout << "collides in lane: " << data.proposed_lane << endl;
     for (int i = 0; i < PLANNING_HORIZON; ++i) {
       Vehicle::snapshot snap = trajectory[i];
 
-      for (auto pair : filtered) {
+      for (auto pair : cars_in_proposed_lane) {
         Vehicle::prediction state = pair.second[i];
         if (checkCollisions) {
           bool vehicle_collides = check_collision(snap, state, checkstate);
@@ -138,7 +138,7 @@ namespace pathplanner {
       Vehicle::snapshot snap = trajectory[i];
       //accels.push_back(snap.get_acceleration());
 
-      for (auto pair : filtered_actual_lane) {
+      for (auto pair : cars_in_actual_lane) {
         Vehicle::prediction state = pair.second[i];
         // do not check collisions on actual line
         double dist = state.s - snap.s;
@@ -156,16 +156,19 @@ namespace pathplanner {
   bool Estimator::check_collision(Vehicle::snapshot snap, Vehicle::prediction s_now, string checkstate) {
     double s = snap.s;
     double v = snap.get_speed();
-    // double MANOEUVRE = v * 50 * INTERVAL + 2;
+
+    double collide_car_v = s_now.get_velocity();
+    //double predicted_distance = PREDICTION_INTERVAL*(s + v - s_now.s - collide_car_v);
     
     //double v_target = (s_now - s_previous) / PREDICTION_INTERVAL;
-    if (s_now.s > s && (s_now.s - s) < MANOEUVRE) {
-      return true;
+    if (s_now.s > s && s_now.s - s > MANOEUVRE && (collide_car_v - v) > 5) {
+      return false;
     }
-    else if (s_now.s < s && (s - s_now.s) < MANOEUVRE) {
-      return true;
+    else if (s > s_now.s && s - s_now.s > MANOEUVRE && (v - collide_car_v) > 5) {
+      return false;
     }
-    return false;
+
+    return true;
     throw invalid_argument("Incorrect s coordinate for predicted trajectory");
   }
 
