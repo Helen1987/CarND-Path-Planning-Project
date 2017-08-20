@@ -29,7 +29,8 @@ namespace pathplanner {
       vector<double> previous_path_y;
 
       void set_previous_path(vector<double> previous_path_x, vector<double> previous_path_y);
-      void generate_trajectory(double car_s, double car_x, double car_y, double car_yaw, int lane, double ref_vel);
+      void generate_trajectory(double car_s, double car_x, double car_y, 
+        double car_yaw, int lane, double ref_vel, bool normal_mode);
 
     private:
 
@@ -49,7 +50,7 @@ namespace pathplanner {
 
       Coord convert2global(double x, double y);
 
-      void update_trajectory(vector<double> ptsx, vector<double> ptsy, double ref_vel);
+      void update_trajectory(vector<double> ptsx, vector<double> ptsy, double ref_vel, bool normal_mode);
 
   };
 

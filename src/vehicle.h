@@ -23,7 +23,8 @@ namespace pathplanner {
     double const SPEED_INCREMENT = .224;
     double const PREDICTION_INTERVAL = 0.5;
     //double const MANOEUVRE = 10;
-    double const MANOEUVRE = 5;
+    double const MANOEUVRE = 4;
+    double const PREDICTION_DISTANCE = 20;
 
     double x;
     double y;
@@ -134,6 +135,8 @@ namespace pathplanner {
       }
     };
 
+    bool is_run_mode = false;
+
     bool shouldPredict() {
       return updates > 10;
     }
@@ -174,6 +177,8 @@ namespace pathplanner {
     bool is_behind_of(prediction pred, int lane);
 
     bool is_close_to(prediction pred, int lane);
+
+    bool is_interrupted(prediction pred, int lane);
 
     //collider will_collide_with(Vehicle other, int timesteps);
 

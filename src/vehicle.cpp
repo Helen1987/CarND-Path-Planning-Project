@@ -117,7 +117,7 @@ namespace pathplanner {
       Vehicle::estimate estimate = Vehicle::estimate();
       estimate.state = state;
       auto trajectory = trajectory_for_state(state, predictions);
-      estimate.cost = estimator.calculate_cost(trajectory, predictions, state);
+      estimate.cost = estimator.calculate_cost(trajectory, predictions, state, true);
       costs.push_back(estimate);
     }
     auto best = min_element(std::begin(costs), std::end(costs),
@@ -125,7 +125,8 @@ namespace pathplanner {
       return est1.cost < est2.cost;
     });
     //if ((*best).state != KL) {
-      //cout << "best estimate: " << (*best).cost << " in state " << (*best).state << " speed " << get_velocity() << endl;
+      cout << "best estimate: " << (*best).cost << " in state " << (*best).state << " speed " 
+        << get_velocity() << " lane: " << lane << endl;
     //}
     return (*best).state;
   }
@@ -257,13 +258,14 @@ namespace pathplanner {
       this->x += this->dx * t + this->ddx*t*t / 2;
       this->dx += this->ddx * t;
     }
+    double new_angle = atan2(dy, dx);
+    this->yaw = (new_angle < 0.1) ? 0 : new_angle;
     vector<double> frenet = getFrenet(this->x, this->y, this->yaw, Vehicle::map_waypoints_x, Vehicle::map_waypoints_y);
     this->s = frenet[0];
     this->d = frenet[1];
   }
 
   Vehicle::prediction Vehicle::state_at(double t) {
-
     prediction pred;
     double x, y;
     if (abs(this->ddy) < 0.001) {
@@ -282,23 +284,30 @@ namespace pathplanner {
       x = this->x + this->dx * t + this->ddx * t * t / 2;
       pred.vx = this->dx + this->ddx * t;
     }
-    vector<double> frenet = getFrenet(x, y, this->yaw, Vehicle::map_waypoints_x, Vehicle::map_waypoints_y);
+    double new_angle = atan2(pred.vy, pred.vx);
+    double yaw = (new_angle < 0.1) ? 0 : new_angle;
+    vector<double> frenet = getFrenet(x, y, yaw, Vehicle::map_waypoints_x, Vehicle::map_waypoints_y);
     pred.s = frenet[0];
     pred.d = frenet[1];
     return pred;
   }
 
   bool Vehicle::is_in_front_of(prediction pred) {
-    return pred.is_in_lane(proposed_lane) && pred.s + MANOEUVRE < s;
+    return pred.is_in_lane(proposed_lane) && pred.s < s;
   }
 
   bool Vehicle::is_behind_of(prediction pred, int lane) {
-    return pred.is_in_lane(lane) && pred.s > s + MANOEUVRE && (pred.s - s) < 1.5*SAFE_DISTANCE;
+    return pred.is_in_lane(lane) && pred.s > s && (pred.s - s) < 1.5*SAFE_DISTANCE;
   }
 
   bool Vehicle::is_close_to(prediction pred, int lane) {
     //double MANOEUVRE = 50 * TIME_INTERVAL* get_velocity() + 2;
-    return pred.is_in_lane(lane) && pred.s > s + MANOEUVRE && pred.s - s < SAFE_DISTANCE;
+    return pred.is_in_lane(lane) && pred.s > s && pred.s - s < SAFE_DISTANCE;
+  }
+
+  bool Vehicle::is_interrupted(prediction pred, int lane) {
+    //double MANOEUVRE = 50 * TIME_INTERVAL* get_velocity() + 2;
+    return pred.is_in_lane(lane) && s > pred.s && s - pred.s  < PREDICTION_DISTANCE;
   }
 
   void Vehicle::realize_state(map<int, vector<prediction>> predictions, bool verbosity) {
@@ -342,8 +351,19 @@ namespace pathplanner {
   void Vehicle::_update_ref_speed_for_lane(map<int, vector<prediction>> predictions, int lane, bool verbosity) {
     bool too_close = false, keep_speed = false;
     double max_speed = MAX_SPEED;
+    double velocity = get_velocity();
+
     for (auto pair : predictions) {
       prediction pred = pair.second[0];
+      if (is_run_mode) {
+        if (is_interrupted(pred, lane)) {
+          velocity -= SPEED_INCREMENT;
+          set_velocity(velocity, PREDICTION_INTERVAL);
+          cout << "Car injected into lane!!! " << velocity << endl;
+          throw invalid_argument("Car injected into lane!!!");
+        }
+      }
+
       if (is_behind_of(pred, lane) && pred.get_velocity() < max_speed) {
         if (verbosity) {
           cout << "max speed updated to: " << pred.get_velocity() << endl;
@@ -362,7 +382,6 @@ namespace pathplanner {
         too_close = true;
       }
     }
-    double velocity = get_velocity();
 
     if (too_close) {
       velocity -= SPEED_INCREMENT;

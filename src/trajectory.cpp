@@ -41,7 +41,7 @@ namespace pathplanner {
     return coord;
   }
 
-  void Trajectory::update_trajectory(vector<double> ptsx, vector<double> ptsy, double ref_vel) {
+  void Trajectory::update_trajectory(vector<double> ptsx, vector<double> ptsy, double ref_vel, bool normal_mode) {
     convert2Local(ptsx, ptsy);
 
     /*for (double item : ptsx) {
@@ -57,9 +57,17 @@ namespace pathplanner {
     s.set_points(ptsx, ptsy);
 
     // fill with the previous points from the last time
-    for (int i = 0; i < previous_path_x.size(); ++i) {
-      next_x_vals.push_back(previous_path_x[i]);
-      next_y_vals.push_back(previous_path_y[i]);
+    if (normal_mode) {
+      for (int i = 0; i < previous_path_x.size(); ++i) {
+        next_x_vals.push_back(previous_path_x[i]);
+        next_y_vals.push_back(previous_path_y[i]);
+      }
+    }
+    else {
+      next_x_vals.push_back(previous_path_x[0]);
+      next_y_vals.push_back(previous_path_y[0]);
+      next_x_vals.push_back(previous_path_x[1]);
+      next_y_vals.push_back(previous_path_y[1]);
     }
 
     // calculate how to break up spline points so that we travel at our ddesired reference velocity
@@ -94,7 +102,7 @@ namespace pathplanner {
     }*/
   }
 
-  void Trajectory::generate_trajectory(double car_s, double car_x, double car_y, double car_yaw, int lane, double ref_vel) {
+  void Trajectory::generate_trajectory(double car_s, double car_x, double car_y, double car_yaw, int lane, double ref_vel, bool normal_mode) {
     // Create a list of widly spaced waypoints (x,y), evenly spaced at 30 m
     // Later we will interpolate these waypoints with a spline and fill it in with more points tha control speed
     next_x_vals.clear();
@@ -120,7 +128,6 @@ namespace pathplanner {
       // Use two points that make the path tangent to the car
       double prev_car_x = car_x - cos(car_yaw);
       double prev_car_y = car_y - sin(car_yaw);
-      
 
       ptsx.push_back(prev_car_x);
       ptsx.push_back(car_x);
@@ -129,12 +136,27 @@ namespace pathplanner {
       ptsy.push_back(car_y);
     }
     // use the previous path's end point as starting reference
-    else {
+    else if (normal_mode) {
       ref_x = previous_path_x[prev_size - 1];
       ref_y = previous_path_y[prev_size - 1];
 
       double ref_x_prev = previous_path_x[prev_size - 2];
       double ref_y_prev = previous_path_y[prev_size - 2];
+      ref_yaw = atan2(ref_y - ref_y_prev, ref_x - ref_x_prev);
+
+      // Use two points that make the path tangent to the previous path's end point
+      ptsx.push_back(ref_x_prev);
+      ptsx.push_back(ref_x);
+
+      ptsy.push_back(ref_y_prev);
+      ptsy.push_back(ref_y);
+    }
+    else {
+      ref_x = previous_path_x[1];
+      ref_y = previous_path_y[1];
+
+      double ref_x_prev = previous_path_x[0];
+      double ref_y_prev = previous_path_y[0];
       ref_yaw = atan2(ref_y - ref_y_prev, ref_x - ref_x_prev);
 
       // Use two points that make the path tangent to the previous path's end point
@@ -165,6 +187,6 @@ namespace pathplanner {
       cout << "yl: " << item << " " << endl;
     }*/
 
-    update_trajectory(ptsx, ptsy, ref_vel);
+    update_trajectory(ptsx, ptsy, ref_vel, normal_mode);
   }
 }

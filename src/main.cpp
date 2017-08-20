@@ -174,12 +174,21 @@ int main() {
             }
           }
           //cout << "update ego car " << car_speed << endl;
+          ego_car.is_run_mode = false;
           ego_car.update_params(car_x, car_y, car_yaw, car_s, car_d, diff);
           ego_car.update_state(predictions, 3);
-          ego_car.realize_state(predictions, false);
+          ego_car.is_run_mode = true;
+          bool normal_mode = false;
+          try {
+            ego_car.realize_state(predictions, false);
+            normal_mode = true;
+          }
+          catch (invalid_argument ex) {
+            normal_mode = false;
+          }
           //cout << "state: " << ego_car.state << " ref_vel: " << ego_car.get_velocity() << " lane: " << ego_car.lane << endl;
 
-          trajectory.generate_trajectory(car_s, car_x, car_y, car_yaw, ego_car.lane, ego_car.get_velocity());
+          trajectory.generate_trajectory(car_s, car_x, car_y, car_yaw, ego_car.lane, ego_car.get_velocity(), normal_mode);
 
           msgJson["next_x"] = trajectory.next_x_vals;
           msgJson["next_y"] = trajectory.next_y_vals;

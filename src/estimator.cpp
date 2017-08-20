@@ -36,7 +36,7 @@ namespace pathplanner {
       double time_til_collision = data.collides.step*PREDICTION_INTERVAL;
       double exponent = time_til_collision*time_til_collision;
       double mult = exp(-exponent);
-
+      cout << " collision: " << mult * COLLISION << " on step: " << data.collides.step << endl;
       return mult * COLLISION;
     }
     return 0;
@@ -45,7 +45,7 @@ namespace pathplanner {
   double Estimator::free_line_cost(vector<Vehicle::snapshot> trajectory,
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     double closest = data.prop_closest_approach;
-    //cout << "prop closest " << closest << endl;
+    cout << "prop closest " << closest << endl;
     if (closest > 40) {
       return 0.0;
     }
@@ -56,7 +56,7 @@ namespace pathplanner {
   double Estimator::buffer_cost(vector<Vehicle::snapshot> trajectory,
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     double closest = data.actual_closest_approach;
-    //cout << "actual closest " << closest << endl;
+    cout << "actual closest " << closest << endl;
     if (closest < 10) {
       return 10 * DANGER;
     }
@@ -158,14 +158,22 @@ namespace pathplanner {
     double v = snap.get_speed();
 
     double collide_car_v = s_now.get_velocity();
-    //double predicted_distance = PREDICTION_INTERVAL*(s + v - s_now.s - collide_car_v);
-    
-    //double v_target = (s_now - s_previous) / PREDICTION_INTERVAL;
-    if (s_now.s > s && s_now.s - s > MANOEUVRE && (collide_car_v - v) > 5) {
-      return false;
+
+    if (s_now.s > s) {
+      if (s_now.s - s >= 3*MANOEUVRE && collide_car_v > v) {
+        //double predicted_distance = s_now.s - s + PREDICTION_INTERVAL*(collide_car_v - v);
+        //  if (predicted_distance >= 3*MANOEUVRE) {
+            return false;
+        //}
+      }
     }
-    else if (s > s_now.s && s - s_now.s > MANOEUVRE && (v - collide_car_v) > 5) {
-      return false;
+    else if (s >= s_now.s) {
+      if (s - s_now.s >= PREDICTION_DISTANCE && v > collide_car_v) {
+        //double predicted_distance = s - s_now.s + PREDICTION_INTERVAL*(v - collide_car_v);
+        //if (predicted_distance >= 2*MANOEUVRE) {
+          return false;
+        //}
+      }
     }
 
     return true;
