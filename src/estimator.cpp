@@ -46,11 +46,11 @@ namespace pathplanner {
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     double closest = data.prop_closest_approach;
     //cout << "prop closest " << closest << endl;
-    if (closest > 70) {
+    if (closest > 40) {
       return 0.0;
     }
     double multiplier = (MAX_DISTANCE - closest) / MAX_DISTANCE;
-    return multiplier * EFFICIENCY;
+    return 5 * multiplier * EFFICIENCY;
   }
 
   double Estimator::buffer_cost(vector<Vehicle::snapshot> trajectory,
@@ -161,10 +161,10 @@ namespace pathplanner {
     //double predicted_distance = PREDICTION_INTERVAL*(s + v - s_now.s - collide_car_v);
     
     //double v_target = (s_now - s_previous) / PREDICTION_INTERVAL;
-    if (s_now.s > s && s_now.s - s > MANOEUVRE && (collide_car_v - v) > 6) {
+    if (s_now.s > s && s_now.s - s > MANOEUVRE && (collide_car_v - v) > 5) {
       return false;
     }
-    else if (s > s_now.s && s - s_now.s > MANOEUVRE && (v - collide_car_v) > 6) {
+    else if (s > s_now.s && s - s_now.s > MANOEUVRE && (v - collide_car_v) > 5) {
       return false;
     }
 
