@@ -18,9 +18,12 @@ namespace pathplanner {
     double const TIME_INTERVAL = 0.02;
     double const LANE_WIDTH = 4.0;
     double const MIDDLE_LANE = LANE_WIDTH/2;
-    double const SAFE_DISTANCE = 22.0;
+    double const SAFE_DISTANCE = 30.0;
+    double const TOO_SHORT_DISTANCE = 15.0;
     double const SPEED_INCREMENT = .224;
     double const PREDICTION_INTERVAL = 0.5;
+    //double const MANOEUVRE = 10;
+    //double const MANOEUVRE = 6;
 
     double x;
     double y;
@@ -54,9 +57,9 @@ namespace pathplanner {
       //cout << "updated vel: " << get_velocity() << " new dx: " << this->dx << " new dy: " << this->dy << endl;
     }
 
-    bool is_in_the_same_lane(double other_d) {
+    /*bool is_in_the_same_lane(double other_d) {
       return (other_d < LANE_WIDTH * (lane + 1)) && (other_d > LANE_WIDTH * lane);
-    }
+    }*/
 
   public:
     double const MAX_SPEED = 49.5;
@@ -74,6 +77,7 @@ namespace pathplanner {
     }
 
     int lane = 1;
+    int proposed_lane = 1;
 
     struct collider {
       bool collision; // is there a collision?
@@ -91,7 +95,7 @@ namespace pathplanner {
       }
 
       void display() {
-        //cout << "s: " << s << " d: " << d << " vx: " << vx << " vy: " << vy << endl;
+        cout << "s: " << s << " d: " << d << " vx: " << vx << " vy: " << vy << endl;
       }
     };
 
@@ -106,7 +110,9 @@ namespace pathplanner {
       double d;
       double yaw;
       //double ref_vel;
-      double lane;
+      int lane;
+      int proposed_lane;
+
       string state;
 
       double get_speed() {
@@ -157,32 +163,32 @@ namespace pathplanner {
 
     prediction state_at(double t);
 
-    bool collides_with(Vehicle other, int at_time);
+    //bool collides_with(Vehicle other, int at_time);
 
     bool is_in_front_of(prediction pred);
 
     bool is_close_to(prediction pred);
 
-    collider will_collide_with(Vehicle other, int timesteps);
+    //collider will_collide_with(Vehicle other, int timesteps);
 
-    void realize_state(map<int, vector<prediction> > predictions);
+    void realize_state(map<int, vector<prediction> > predictions, bool verbosity = false);
 
     void realize_constant_speed();
 
-    void realize_keep_lane(map<int, vector<prediction> > predictions);
+    void realize_keep_lane(map<int, vector<prediction> > predictions, bool verbosity = false);
 
-    void realize_lane_change(map<int, vector<prediction> > predictions, string direction);
+    void realize_lane_change(map<int, vector<prediction> > predictions, string direction, bool verbosity = false);
 
-    void realize_prep_lane_change(map<int, vector<prediction> > predictions, string direction);
+    void realize_prep_lane_change(map<int, vector<prediction> > predictions, string direction, bool verbosity = false);
 
-    vector<prediction> generate_predictions(int horizon);
+    vector<prediction> generate_predictions(int horizon = 10);
 
     string get_next_state(map<int, vector<prediction>> predictions, int lanes_available);
     vector<snapshot> trajectory_for_state(string state, map<int, vector<prediction>> predictions,
-      int horizon = 5);
+      int horizon = 10);
     void restore_state_from_snapshot(snapshot snapshot);
 
-    void _update_ref_speed_for_lane(map<int, vector<prediction> > predictions, int lane, int s);
+    void _update_ref_speed_for_lane(map<int, vector<prediction> > predictions, int lane, int s, bool verbosity = false);
     snapshot get_snapshot();
   };
 

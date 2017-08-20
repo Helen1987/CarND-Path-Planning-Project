@@ -158,7 +158,7 @@ int main() {
                 vehicle = vehicles[data[0]];
                 (*vehicle).update_yaw(data[1], data[2], data[3], data[4], data[5], data[6], diff);
                 if ((*vehicle).shouldPredict()) {
-                  vector<Vehicle::prediction> car_preds = (*vehicle).generate_predictions(5);
+                  vector<Vehicle::prediction> car_preds = (*vehicle).generate_predictions();
                   predictions[(*vehicle).id] = car_preds;
                 }
               }
@@ -176,7 +176,7 @@ int main() {
           //cout << "update ego car " << car_speed << endl;
           ego_car.update_params(car_x, car_y, car_yaw, car_s, car_d, diff);
           ego_car.update_state(predictions, 3);
-          ego_car.realize_state(predictions);
+          ego_car.realize_state(predictions, true);
           //cout << "state: " << ego_car.state << " ref_vel: " << ego_car.get_velocity() << " lane: " << ego_car.lane << endl;
 
           trajectory.generate_trajectory(car_s, car_x, car_y, car_yaw, ego_car.lane, ego_car.get_velocity());

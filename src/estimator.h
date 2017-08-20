@@ -23,8 +23,8 @@ namespace pathplanner {
 
     private:
       struct collision {
-        bool hasCollision;
-        int step;
+        bool hasCollision = false;
+        int step = 1000;
       };
 
       struct TrajectoryData
@@ -34,7 +34,8 @@ namespace pathplanner {
         double avg_speed;
         //double max_acceleration;
         //double rms_acceleration;
-        double closest_approach;
+        double prop_closest_approach;
+        double actual_closest_approach;
         collision collides;
       };
 
@@ -42,25 +43,29 @@ namespace pathplanner {
         map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data)> DelegateType;
 
       vector<DelegateType> delegates = { (DelegateType)&Estimator::inefficiency_cost,
-        (DelegateType)&Estimator::collision_cost,
+        //(DelegateType)&Estimator::collision_cost,
         (DelegateType)&Estimator::buffer_cost,
-        (DelegateType)&Estimator::change_lane_cost };
+        (DelegateType)&Estimator::change_lane_cost,
+        (DelegateType)&Estimator::free_line_cost
+      };
 
       // priority levels for costs
       int const COLLISION = pow(10, 6);
       int const DANGER = pow(10, 5);
-      int const COMFORT = pow(10, 4);
-      int const EFFICIENCY = pow(10, 2);
+      int const COMFORT = pow(10, 3);
+      int const EFFICIENCY = pow(10, 3);
       double const MAX_SPEED = 49.5;
 
-      double const DESIRED_BUFFER = 2.5; // timesteps
-      int const PLANNING_HORIZON = 2;
+      double const DESIRED_BUFFER = 30; // timesteps
+      int const PLANNING_HORIZON = 1;
 
       double const PREDICTION_INTERVAL = 0.5;
       double const INTERVAL = .02;
       double const DISTANCE = 30;
       double const LANE_WIDTH = 4.0;
       double const MIDDLE_LANE = LANE_WIDTH / 2;
+      double const MANOEUVRE = 5;
+      double const MAX_DISTANCE = 999999;
 
       double change_lane_cost(vector<Vehicle::snapshot> trajectory,
         map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const;
@@ -74,10 +79,13 @@ namespace pathplanner {
       double buffer_cost(vector<Vehicle::snapshot> trajectory,
         map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const;
 
-      TrajectoryData get_helper_data(vector<Vehicle::snapshot> trajectory,
-        map<int, vector<Vehicle::prediction>> predictions);
+      double free_line_cost(vector<Vehicle::snapshot> trajectory,
+        map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const;
 
-      bool check_collision(Vehicle::snapshot snap, double s_previous, double s_now);
+      TrajectoryData get_helper_data(vector<Vehicle::snapshot> trajectory,
+        map<int, vector<Vehicle::prediction>> predictions, string state, int lane);
+
+      bool check_collision(Vehicle::snapshot snap, Vehicle::prediction s_now, string checkstate);
 
       map<int, vector<Vehicle::prediction>> filter_predictions_by_lane(
         map<int, vector<Vehicle::prediction>> predictions, int lane);

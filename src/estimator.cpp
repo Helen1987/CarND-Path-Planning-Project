@@ -42,27 +42,35 @@ namespace pathplanner {
     return 0;
   }
 
+  double Estimator::free_line_cost(vector<Vehicle::snapshot> trajectory,
+    map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
+    double closest = data.prop_closest_approach;
+    cout << "prop closest " << closest << endl;
+    double multiplier = (MAX_DISTANCE - closest) / MAX_DISTANCE;
+    return multiplier * EFFICIENCY;
+  }
+
   double Estimator::buffer_cost(vector<Vehicle::snapshot> trajectory,
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
-    double closest = data.closest_approach;
-    if (closest < 1) {
+    double closest = data.actual_closest_approach;
+    cout << "actual closest " << closest << endl;
+    if (closest < 2) {
       return 10 * DANGER;
     }
 
-    double timesteps_away = closest / (data.avg_speed*INTERVAL);
-    if (timesteps_away > DESIRED_BUFFER) {
+    //double timesteps_away = closest / (data.avg_speed*PREDICTION_INTERVAL);
+    if (closest > DESIRED_BUFFER) {
       return 0.0;
     }
 
-    double multiplier = 1.0 - pow((timesteps_away / DESIRED_BUFFER), 2);
+    double multiplier = 1.0 - pow((closest / DESIRED_BUFFER), 2);
     return multiplier * DANGER;
     return 0;
   }
 
   double Estimator::calculate_cost(Vehicle vehicle, vector<Vehicle::snapshot> trajectory,
       map<int, vector<Vehicle::prediction>>predictions, string state, bool verbose/*=false*/) {
-    TrajectoryData trajectory_data = get_helper_data(trajectory, predictions);
-    trajectory_data.current_lane = vehicle.lane;
+    TrajectoryData trajectory_data = get_helper_data(trajectory, predictions, state, vehicle.lane);
 
     double cost = 0.0;
     for (auto cf : delegates) {
@@ -72,10 +80,7 @@ namespace pathplanner {
 
       cost += new_cost;
     }
-    if (state == "PLCR" || state == "PLCL")
-    {
-      //cout << "has cost " << cost << " for state " << state << endl;
-    }
+    cout << "has cost " << cost << " for state " << state << endl;
     return cost;
     /*if (state == "KL")
       return 0;
@@ -84,7 +89,7 @@ namespace pathplanner {
 
 
   Estimator::TrajectoryData Estimator::get_helper_data(vector<Vehicle::snapshot> trajectory,
-    map<int, vector<Vehicle::prediction>>predictions) {
+    map<int, vector<Vehicle::prediction>>predictions, string checkstate, int lane) {
     TrajectoryData data = TrajectoryData();
 
     vector<Vehicle::snapshot> t = trajectory;
@@ -95,34 +100,60 @@ namespace pathplanner {
     //end_distance_to_goal = vehicle.goal_s - last.s
     //end_lanes_from_goal = abs(vehicle.goal_lane - last.lane)
     double dt = trajectory.size()*PREDICTION_INTERVAL;
-    data.proposed_lane = first.lane;
+    data.current_lane = lane;
+    data.proposed_lane = first.proposed_lane;
     data.avg_speed = (last.get_speed()*dt - current_snapshot.get_speed()) / dt; // (v2*dt-v1*1)/dt
 
     // initialize a bunch of variables
     //vector<double> accels = {};
-    data.closest_approach = 999999;
+    data.prop_closest_approach = MAX_DISTANCE;
+    data.actual_closest_approach = MAX_DISTANCE;
 
     data.collides = collision();
     data.collides.hasCollision = false;
     //Vehicle::snapshot last_snap = trajectory[0];
     map<int, vector<Vehicle::prediction>> filtered = filter_predictions_by_lane(predictions, data.proposed_lane);
+    map<int, vector<Vehicle::prediction>> filtered_actual_lane = filter_predictions_by_lane(predictions, data.current_lane);
 
-    for (int i = 1; i < PLANNING_HORIZON + 1; ++i) {
+    cout << checkstate << " state esimation" << endl;
+    cout << "collides in lane: " << data.proposed_lane << endl;
+    for (int i = 0; i < PLANNING_HORIZON; ++i) {
       Vehicle::snapshot snap = trajectory[i];
       //accels.push_back(snap.get_acceleration());
 
       for (auto pair : filtered) {
         Vehicle::prediction state = pair.second[i];
-        Vehicle::prediction last_state = pair.second[i - 1];
-        bool vehicle_collides = check_collision(snap, last_state.s, state.s);
+        //Vehicle::prediction last_state = pair.second[i - 1];
+        bool vehicle_collides = check_collision(snap, state, checkstate);
         if (vehicle_collides) {
           data.collides.hasCollision = true;
           data.collides.step = i;
+        }
+        double dist = state.s - snap.s;
+        if (dist > 0 && dist < data.prop_closest_approach) {
+          data.prop_closest_approach = dist;
+        }
+        //last_snap = snap;
+      }
+    }
+    cout << "collides in lane: " << data.current_lane << endl;
+    for (int i = 0; i < PLANNING_HORIZON; ++i) {
+      Vehicle::snapshot snap = trajectory[i];
+      //accels.push_back(snap.get_acceleration());
 
-          double dist = abs(state.s - snap.s);
-          if (dist < data.closest_approach) {
-            data.closest_approach = dist;
+      for (auto pair : filtered_actual_lane) {
+        Vehicle::prediction state = pair.second[i];
+        //Vehicle::prediction last_state = pair.second[i - 1];
+        bool vehicle_collides = check_collision(snap, state, checkstate);
+        if (vehicle_collides) {
+          data.collides.hasCollision = true;
+          if (data.collides.step > i) {
+            data.collides.step = i;
           }
+        }
+        double dist = state.s - snap.s;
+        if (dist > 0 && dist < data.actual_closest_approach) {
+          data.actual_closest_approach = dist;
         }
         //last_snap = snap;
       }
@@ -141,36 +172,45 @@ namespace pathplanner {
   }
 
 
-  bool Estimator::check_collision(Vehicle::snapshot snap, double s_previous, double s_now) {
+  bool Estimator::check_collision(Vehicle::snapshot snap, Vehicle::prediction s_now, string checkstate) {
     double s = snap.s;
     double v = snap.get_speed();
-    double v_target = (s_now - s_previous) / PREDICTION_INTERVAL;
-    if ((s_previous - s) < 1) {
-      if (v_target > v) {
-        return false;
-      }
-      else {
-        return true;
-      }
+    // double MANOEUVRE = v * 50 * INTERVAL + 2;
+    
+    //double v_target = (s_now - s_previous) / PREDICTION_INTERVAL;
+    if (s_now.s > s && (s_now.s - s) < MANOEUVRE) {
+      cout << "manoeuvre:  " << MANOEUVRE << " d " << s_now.d << " s " << s_now.s << endl;
+      snap.display();
+      cout << checkstate << " collides: (s_now.s > s) " << endl;
+      return true;
+    }
+    else if (s_now.s < s && (s - s_now.s) < MANOEUVRE) {
+      cout << "manoeuvre:  " << MANOEUVRE << " d " << s_now.d << " s " << s_now.s << endl;
+      snap.display();
+      cout << checkstate << " collides: (s_now.s < s) " << endl;
+      return true;
+    }
+    return false;
+
+    /*if (s_now.s - s < -MANOEUVRE) {
+      return false;
+    }
+    else {
+      cout << "manoeuvre:  " << MANOEUVRE << " d " << s_now.d << " s " << s_now.s << endl;
+      snap.display();
+      cout << checkstate << " collides: s_now < s" << endl;
+      return true;
     }
 
-    if (s_previous < s) {
-      if (s_now >= s) {
-        return true;
-      }
-      else {
-        return false;
-      }
+    if (s_now.s - s > MANOEUVRE) {
+      return false;
     }
-
-    if (s_previous > s) {
-      if (s_now <= s) {
-        return true;
-      }
-      else {
-        return false;
-      }
-    }
+    else {
+      cout << "manoeuvre:  " << MANOEUVRE << " d " << s_now.d << " s " << s_now.s << endl;
+      snap.display();
+      cout << checkstate << " collides: s_now > s" << endl;
+      return true;
+    }*/
 
     throw invalid_argument("Incorrect s coordinate for predicted trajectory");
   }
@@ -179,8 +219,13 @@ namespace pathplanner {
     map<int, vector<Vehicle::prediction>> predictions, int lane) {
     map<int, vector<Vehicle::prediction>> filtered = {};
     for (auto pair: predictions) {
+      pair.second[0].display();
       if (pair.second[0].is_in_lane(lane)) {
+        cout << "in lane: " << lane << endl;
         filtered[pair.first] = pair.second;
+      }
+      else {
+        //cout << "not in lane: " << lane << endl;
       }
     }
     return filtered;
