@@ -117,7 +117,7 @@ namespace pathplanner {
       Vehicle::estimate estimate = Vehicle::estimate();
       estimate.state = state;
       auto trajectory = trajectory_for_state(state, predictions);
-      estimate.cost = estimator.calculate_cost(*this, trajectory, predictions, state);
+      estimate.cost = estimator.calculate_cost(trajectory, predictions, state);
       costs.push_back(estimate);
     }
     auto best = min_element(std::begin(costs), std::end(costs),
@@ -195,18 +195,6 @@ namespace pathplanner {
     this->lane = snapshot.lane;
     this->proposed_lane = snapshot.proposed_lane;
   }
-
-  //void Vehicle::configure(vector<int> road_data) {
-    /*
-    Called by simulator before simulation begins. Sets various
-    parameters which will impact the ego vehicle.
-    */
-    //target_speed = road_data[0];
-    //lanes_available = road_data[1];
-    //goal_s = road_data[2];
-    //goal_lane = road_data[3];
-    //max_acceleration = road_data[4];
-  //}
 
   void Vehicle::display() {
     cout << "vehicle " << this->id << " info" << endl;
@@ -301,16 +289,16 @@ namespace pathplanner {
   }
 
   bool Vehicle::is_in_front_of(prediction pred) {
-    return pred.is_in_lane(proposed_lane) && pred.s < s;
+    return pred.is_in_lane(proposed_lane) && pred.s + MANOEUVRE < s;
   }
 
-  bool Vehicle::is_behind_of(prediction pred) {
-    return pred.is_in_lane(proposed_lane) && pred.s > s && (pred.s - s) < 1.5*SAFE_DISTANCE;
+  bool Vehicle::is_behind_of(prediction pred, int lane) {
+    return pred.is_in_lane(lane) && pred.s > s + MANOEUVRE && (pred.s - s) < 1.5*SAFE_DISTANCE;
   }
 
-  bool Vehicle::is_close_to(prediction pred) {
+  bool Vehicle::is_close_to(prediction pred, int lane) {
     //double MANOEUVRE = 50 * TIME_INTERVAL* get_velocity() + 2;
-    return pred.is_in_lane(lane) && pred.s > s && pred.s - s < SAFE_DISTANCE;
+    return pred.is_in_lane(lane) && pred.s > s + MANOEUVRE && pred.s - s < SAFE_DISTANCE;
   }
 
   void Vehicle::realize_state(map<int, vector<prediction>> predictions, bool verbosity) {
@@ -351,12 +339,12 @@ namespace pathplanner {
     ddy = 0;
   }
 
-  void Vehicle::_update_ref_speed_for_lane(map<int, vector<prediction>> predictions, int lane, int s, bool verbosity) {
+  void Vehicle::_update_ref_speed_for_lane(map<int, vector<prediction>> predictions, int lane, bool verbosity) {
     bool too_close = false, keep_speed = false;
     double max_speed = MAX_SPEED;
     for (auto pair : predictions) {
       prediction pred = pair.second[0];
-      if (is_behind_of(pred) && pred.get_velocity() < max_speed) {
+      if (is_behind_of(pred, lane) && pred.get_velocity() < max_speed) {
         if (verbosity) {
           cout << "max speed updated to: " << pred.get_velocity() << endl;
           pred.display();
@@ -366,7 +354,7 @@ namespace pathplanner {
         keep_speed = true;
       }
 
-      if (is_close_to(pred)) {
+      if (is_close_to(pred, lane)) {
         if (verbosity) {
           cout << "pred d: " << pred.d << " my lane: " << lane;
           cout << " pred s: " << pred.s << " my s: " << s << endl;
@@ -399,7 +387,7 @@ namespace pathplanner {
     if (verbosity) {
       cout << "keep lane: " << this->lane << " proposed lane: " << this->proposed_lane << endl;
     }
-    _update_ref_speed_for_lane(predictions, this->lane, this->s, verbosity);
+    _update_ref_speed_for_lane(predictions, this->lane, verbosity);
   }
 
   void Vehicle::realize_lane_change(map<int, vector<prediction>> predictions, string direction, bool verbosity) {
@@ -413,7 +401,7 @@ namespace pathplanner {
     if (verbosity) {
       cout << "lane change: " << this->lane << " proposed lane: " << this->proposed_lane << endl;
     }
-    _update_ref_speed_for_lane(predictions, this->lane, this->s, verbosity);
+    _update_ref_speed_for_lane(predictions, this->lane, verbosity);
   }
 
   void Vehicle::realize_prep_lane_change(map<int, vector<prediction> > predictions, string direction, bool verbosity) {

@@ -171,9 +171,9 @@ namespace pathplanner {
 
     bool is_in_front_of(prediction pred);
 
-    bool is_behind_of(prediction pred);
+    bool is_behind_of(prediction pred, int lane);
 
-    bool is_close_to(prediction pred);
+    bool is_close_to(prediction pred, int lane);
 
     //collider will_collide_with(Vehicle other, int timesteps);
 
@@ -194,7 +194,8 @@ namespace pathplanner {
       int horizon = 10);
     void restore_state_from_snapshot(snapshot snapshot);
 
-    void _update_ref_speed_for_lane(map<int, vector<prediction> > predictions, int lane, int s, bool verbosity = false);
+    void _update_ref_speed_for_lane(map<int, vector<prediction> > predictions,
+      int lane, bool verbosity = false);
     snapshot get_snapshot();
   };
 

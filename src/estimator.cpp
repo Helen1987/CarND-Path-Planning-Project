@@ -57,7 +57,7 @@ namespace pathplanner {
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     double closest = data.actual_closest_approach;
     //cout << "actual closest " << closest << endl;
-    if (closest < 2) {
+    if (closest < 10) {
       return 10 * DANGER;
     }
 
@@ -71,9 +71,9 @@ namespace pathplanner {
     return 0;
   }
 
-  double Estimator::calculate_cost(Vehicle vehicle, vector<Vehicle::snapshot> trajectory,
+  double Estimator::calculate_cost(vector<Vehicle::snapshot> trajectory,
       map<int, vector<Vehicle::prediction>>predictions, string state, bool verbose/*=false*/) {
-    TrajectoryData trajectory_data = get_helper_data(trajectory, predictions, state, vehicle.lane);
+    TrajectoryData trajectory_data = get_helper_data(trajectory, predictions, state);
 
     double cost = 0.0;
     for (auto cf : delegates) {
@@ -88,7 +88,7 @@ namespace pathplanner {
 
 
   Estimator::TrajectoryData Estimator::get_helper_data(vector<Vehicle::snapshot> trajectory,
-    map<int, vector<Vehicle::prediction>>predictions, string checkstate, int lane) {
+    map<int, vector<Vehicle::prediction>>predictions, string checkstate) {
     TrajectoryData data = TrajectoryData();
 
     vector<Vehicle::snapshot> t = trajectory;
@@ -97,7 +97,7 @@ namespace pathplanner {
     Vehicle::snapshot last = t[t.size() - 1];
 
     double dt = trajectory.size()*PREDICTION_INTERVAL;
-    data.current_lane = lane;
+    data.current_lane = first.lane;
     data.proposed_lane = first.proposed_lane;
     data.avg_speed = (last.get_speed()*dt - current_snapshot.get_speed()) / dt; // (v2*dt-v1*1)/dt
 

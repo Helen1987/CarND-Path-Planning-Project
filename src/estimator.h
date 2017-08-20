@@ -17,7 +17,7 @@ namespace pathplanner {
 
       virtual ~Estimator() {}
 
-      double calculate_cost(Vehicle vehicle, vector<Vehicle::snapshot> trajectory,
+      double calculate_cost(vector<Vehicle::snapshot> trajectory,
         map<int, vector<Vehicle::prediction>>predictions, string state, bool verbose = false);
 
 
@@ -51,7 +51,7 @@ namespace pathplanner {
 
       // priority levels for costs
       int const COLLISION = pow(10, 6);
-      int const DANGER = pow(10, 5);
+      int const DANGER = pow(10, 6);
       int const COMFORT = pow(10, 4);
       int const EFFICIENCY = pow(10, 4);
       double const MAX_SPEED = 49.5;
@@ -64,7 +64,7 @@ namespace pathplanner {
       //double const DISTANCE = 30;
       double const LANE_WIDTH = 4.0;
       double const MIDDLE_LANE = LANE_WIDTH / 2;
-      double const MANOEUVRE = 4;
+      double const MANOEUVRE = 5;
       double const MAX_DISTANCE = 999999;
 
       double change_lane_cost(vector<Vehicle::snapshot> trajectory,
@@ -83,7 +83,7 @@ namespace pathplanner {
         map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const;
 
       TrajectoryData get_helper_data(vector<Vehicle::snapshot> trajectory,
-        map<int, vector<Vehicle::prediction>> predictions, string state, int lane);
+        map<int, vector<Vehicle::prediction>> predictions, string state);
 
       bool check_collision(Vehicle::snapshot snap, Vehicle::prediction s_now, string checkstate);
 
