@@ -46,7 +46,7 @@ namespace pathplanner {
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     double closest = data.prop_closest_approach;
     cout << "prop closest " << closest << endl;
-    if (closest > 40) {
+    if (closest > 82) {
       return 0.0;
     }
     double multiplier = (MAX_DISTANCE - closest) / MAX_DISTANCE;
@@ -127,7 +127,7 @@ namespace pathplanner {
             data.collides.step = i;
           }
         }
-        double dist = state.s - snap.s;
+        double dist = state.s - snap.original_s;
         if (dist > 0 && dist < data.prop_closest_approach) {
           data.prop_closest_approach = dist;
         }
@@ -141,7 +141,7 @@ namespace pathplanner {
       for (auto pair : cars_in_actual_lane) {
         Vehicle::prediction state = pair.second[i];
         // do not check collisions on actual line
-        double dist = state.s - snap.s;
+        double dist = state.s - snap.original_s;
         if (dist > 0 && dist < data.actual_closest_approach) {
           data.actual_closest_approach = dist;
         }
