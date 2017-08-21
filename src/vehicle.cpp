@@ -315,16 +315,16 @@ namespace pathplanner {
   }
 
   bool Vehicle::is_behind_of(prediction pred, int lane) {
-    return pred.is_in_lane(lane) && pred.s + 1 > s && (pred.s + 1 - s) < 1.5*SAFE_DISTANCE;
+    return pred.is_in_lane(lane) && (pred.s > original_s && (pred.s - original_s) < 4*SAFE_DISTANCE);
   }
 
   bool Vehicle::is_close_to(prediction pred, int lane) {
-    return pred.is_in_lane(lane) && pred.s + 1 > s && pred.s + 1 - s < SAFE_DISTANCE;
+    return pred.is_in_lane(lane) && pred.s > original_s && (pred.s < s || (pred.s - s) < SAFE_DISTANCE);
   }
 
   bool Vehicle::is_interrupted(prediction pred, int lane) {
     bool is_in_line = pred.d < (4.0 * (lane + 1) - 1.4) && pred.d >(4.0 * lane + 1.4);
-    bool is_injected = is_in_line && original_s < pred.s && s > pred.s;
+    bool is_injected = is_in_line && original_s < pred.s && s > pred.s && pred.s - original_s < 3*MANOEUVRE;
     if (is_injected) {
       cout << "injected: " << original_s;
       pred.display();
@@ -379,14 +379,14 @@ namespace pathplanner {
 
     for (auto pair : predictions) {
       prediction pred = pair.second[0];
-      if (is_run_mode) {
+      /*if (is_run_mode) {
         if (is_interrupted(pred, cur_lane)) {
           //velocity -= SPEED_INCREMENT;
           //set_velocity(velocity, PREDICTION_INTERVAL);
           cout << "Car injected into lane!!! " << velocity << endl;
           throw invalid_argument("Car injected into lane!!!");
         }
-      }
+      }*/
 
       if (is_behind_of(pred, cur_lane) && pred.get_velocity() < max_speed) {
         if (verbosity) {
@@ -407,7 +407,7 @@ namespace pathplanner {
       }
     }
 
-    if (too_close) {
+    if (too_close && velocity > 2*max_speed/3) {
       velocity -= SPEED_INCREMENT;
     }
     else {
@@ -482,7 +482,7 @@ namespace pathplanner {
       double delta_v = velocity - target_vel;
       double delta_s = this->s - nearest_behind[0].s;
       //cout << "was vel: " << velocity;
-      if (delta_s < SAFE_DISTANCE && delta_v < -0.01)
+      if (delta_s < SAFE_DISTANCE/2 && delta_v < -0.01)
       {
         if (abs(delta_v) < SPEED_INCREMENT) {
           velocity += SPEED_INCREMENT;

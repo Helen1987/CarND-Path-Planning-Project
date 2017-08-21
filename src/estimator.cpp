@@ -58,7 +58,7 @@ namespace pathplanner {
     double closest = data.actual_closest_approach;
     cout << "actual closest " << closest << endl;
     if (closest < 5) {
-      return 5 * DANGER;
+      return 3 * DANGER;
     }
 
     //double timesteps_away = closest / (data.avg_speed*PREDICTION_INTERVAL);
