@@ -27,7 +27,7 @@ namespace pathplanner {
     double diff = target_speed - speed;
     double pct = diff / target_speed;
     double multiplier = pow(pct, 2);
-    return 5 * multiplier * EFFICIENCY;
+    return multiplier * EFFICIENCY;
   }
 
   double Estimator::collision_cost(vector<Vehicle::snapshot> trajectory,

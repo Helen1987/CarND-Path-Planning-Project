@@ -426,7 +426,7 @@ namespace pathplanner {
       if (velocity < max_speed - SPEED_INCREMENT) {
         velocity += SPEED_INCREMENT;
       }
-      else if (velocity > max_speed + SPEED_INCREMENT && velocity > 25.0) {
+      else if (velocity > max_speed + SPEED_INCREMENT && velocity > 32.0) {
         velocity -= SPEED_INCREMENT;
       }
     }
