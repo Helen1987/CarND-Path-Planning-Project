@@ -142,7 +142,7 @@ namespace pathplanner {
     double original_v = 0;
 
     bool shouldPredict() {
-      return updates > 10;
+      return updates > 3;
     }
 
     int preferred_buffer = 6; // impacts "keep lane" behavior.
@@ -163,6 +163,8 @@ namespace pathplanner {
     void update_params(double x, double y, double yaw, double s, double d, double diff);
 
     void update_yaw(double x, double y, double vx, double vy, double s, double d, double diff);
+
+    void reset(double x, double y, double vx, double vy, double s, double d);
 
     void update_state(map<int, vector<prediction>> predictions, int lanes_available);
 

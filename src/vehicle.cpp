@@ -215,6 +215,19 @@ namespace pathplanner {
     cout << " line: " << this->lane << endl;
   }
 
+  void Vehicle::reset(double x, double y, double vx, double vy, double s, double d) {
+    double new_angle = atan2(vy, vx);
+    this->yaw = (abs(new_angle) < 0.1) ? 0 : new_angle;
+    this->x = x;
+    this->y = y;
+    this->ddx = 0;
+    this->ddy = 0;
+    this->dx = vx;
+    this->dy = vy;
+    this->s = s;
+    this->d = d;
+  }
+
   void Vehicle::update_params(double x, double y, double yaw, double s, double d, double diff) {
     this->x = x;
     this->y = y;
@@ -306,14 +319,11 @@ namespace pathplanner {
   }
 
   bool Vehicle::is_close_to(prediction pred, int lane) {
-    //double MANOEUVRE = 50 * TIME_INTERVAL* get_velocity() + 2;
     return pred.is_in_lane(lane) && pred.s + 1 > s && pred.s + 1 - s < SAFE_DISTANCE;
   }
 
   bool Vehicle::is_interrupted(prediction pred, int lane) {
-    //double vel = get_velocity();
-    //double PREDICTION_DISTANCE = prev_size * TIME_INTERVAL* get_velocity();
-    bool is_in_line = pred.d < (4.0 * (lane + 1) - 1.2) && pred.d >(4.0 * lane + 1.2);
+    bool is_in_line = pred.d < (4.0 * (lane + 1) - 1.4) && pred.d >(4.0 * lane + 1.4);
     bool is_injected = is_in_line && original_s < pred.s && s > pred.s;
     if (is_injected) {
       cout << "injected: " << original_s;
@@ -370,9 +380,9 @@ namespace pathplanner {
     for (auto pair : predictions) {
       prediction pred = pair.second[0];
       if (is_run_mode) {
-        if (is_interrupted(pred, cur_lane)) { //&& cur_lane == proposed_lane)
-          velocity -= SPEED_INCREMENT;
-          set_velocity(velocity, PREDICTION_INTERVAL);
+        if (is_interrupted(pred, cur_lane)) {
+          //velocity -= SPEED_INCREMENT;
+          //set_velocity(velocity, PREDICTION_INTERVAL);
           cout << "Car injected into lane!!! " << velocity << endl;
           throw invalid_argument("Car injected into lane!!!");
         }

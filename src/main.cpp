@@ -207,7 +207,7 @@ int main() {
             car_s = original_s;
             car_yaw = rad2deg(original_yaw);
 
-            ego_car.update_yaw(car_x, car_y, original_vx, original_vy, original_s, original_d, TIME_INTERVAL);
+            ego_car.reset(car_x, car_y, original_vx, original_vy, original_s, original_d);
             normal_mode = false;
           }
           //cout << "state: " << ego_car.state << " ref_vel: " << ego_car.get_velocity() << " lane: " << ego_car.lane << endl;

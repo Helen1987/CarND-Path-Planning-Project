@@ -33,7 +33,7 @@ namespace pathplanner {
   double Estimator::collision_cost(vector<Vehicle::snapshot> trajectory,
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     if (data.collides.hasCollision) {
-      double time_til_collision = data.collides.step*PREDICTION_INTERVAL;
+      double time_til_collision = data.collides.step;
       double exponent = time_til_collision*time_til_collision;
       double mult = exp(-exponent);
       cout << " collision: " << mult * COLLISION << " on step: " << data.collides.step << endl;
@@ -50,15 +50,15 @@ namespace pathplanner {
       return 0.0;
     }
     double multiplier = (MAX_DISTANCE - closest) / MAX_DISTANCE;
-    return 10 * multiplier * EFFICIENCY;
+    return 15 * multiplier * EFFICIENCY;
   }
 
   double Estimator::buffer_cost(vector<Vehicle::snapshot> trajectory,
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     double closest = data.actual_closest_approach;
     cout << "actual closest " << closest << endl;
-    if (closest < 10) {
-      return 10 * DANGER;
+    if (closest < 5) {
+      return 5 * DANGER;
     }
 
     //double timesteps_away = closest / (data.avg_speed*PREDICTION_INTERVAL);
@@ -160,10 +160,13 @@ namespace pathplanner {
 
     double collide_car_v = s_now.get_velocity();
     //cout << " lane " << snap.lane << " s " << s << " v " << v << " or_s " << snap.original_s << " col_v " << collide_car_v << endl;
+    if (snap.original_s <= s_now.s && s_now.s <= s) {
+      return true;
+    }
     if (snap.original_s > s_now.s) {
-      if (snap.original_s - s_now.s > MANOEUVRE && v > collide_car_v) {
+      if (snap.original_s - s_now.s > 2*MANOEUVRE && v > collide_car_v && snap.original_v > collide_car_v) {
         double predicted_distance = snap.original_s - s_now.s + PREDICTION_INTERVAL*(snap.original_v - collide_car_v);
-        if (predicted_distance > 4*MANOEUVRE) {
+        if (predicted_distance > 3*MANOEUVRE) {
           return false;
         }
       }
@@ -173,32 +176,6 @@ namespace pathplanner {
         return false;
       }
     }
-    /*if (s_now.s > s) {
-      if (s_now.s - s >= 2*MANOEUVRE && collide_car_v > v) {
-        //cout << "1 colliison" << endl;
-        double predicted_distance = s_now.s - s + PREDICTION_INTERVAL*(collide_car_v - v);
-        if (predicted_distance >= 2*MANOEUVRE) {
-          cout << "free 1" << " s " << s << " v " << v << " or_s " << snap.original_s << " col_v " << collide_car_v << endl;
-            return false;
-        }
-        cout << "1 clause" << " s " << s << " v " << v << " or_s " << snap.original_s << " col_v " << collide_car_v << endl;
-      }
-      cout << "2 clause" << " s " << s << " v " << v << " or_s " << snap.original_s << " col_v " << collide_car_v << endl;
-    }
-    else if (s >= s_now.s) {
-      if (s_now.s < snap.original_s && snap.original_s - s_now.s > MANOEUVRE) {cout << "3 clause" << " s " << s << " v " << v << " or_s " << snap.original_s << " col_v " << collide_car_v << endl;
-      cout << "free 2" << " s " << s << " v " << v << " or_s " << snap.original_s << " col_v " << collide_car_v << endl;
-        return false;
-      }
-      cout << "3 clause" << " s " << s << " v " << v << " or_s " << snap.original_s << " col_v " << collide_car_v << endl;
-      /*double PREDICTION_DISTANCE = 50 * INTERVAL* snap.get_speed() + MANOEUVRE;
-      if (s - s_now.s >= PREDICTION_DISTANCE && v > collide_car_v) {
-        //double predicted_distance = s - s_now.s + PREDICTION_INTERVAL*(v - collide_car_v);
-        //if (predicted_distance >= 2*MANOEUVRE) {
-          return false;
-        //}
-      }
-    }*/
     cout << "4 clause" << " s " << s << " v " << v << " or_s " << snap.original_s << " col_v " << collide_car_v << endl;
     s_now.display();
 
