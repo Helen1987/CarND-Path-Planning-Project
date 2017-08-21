@@ -33,7 +33,7 @@ namespace pathplanner {
   double Estimator::collision_cost(vector<Vehicle::snapshot> trajectory,
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     if (data.collides.hasCollision) {
-      double time_til_collision = data.collides.step;
+      double time_til_collision = 0;
       double exponent = time_til_collision*time_til_collision;
       double mult = exp(-exponent);
       cout << " collision: " << mult * COLLISION << " on step: " << data.collides.step << endl;
@@ -46,18 +46,18 @@ namespace pathplanner {
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     double closest = data.prop_closest_approach;
     cout << "prop closest " << closest << endl;
-    if (closest > 82) {
+    if (closest > 85) {
       return 0.0;
     }
     double multiplier = (MAX_DISTANCE - closest) / MAX_DISTANCE;
-    return 15 * multiplier * EFFICIENCY;
+    return 20 * multiplier * EFFICIENCY;
   }
 
   double Estimator::buffer_cost(vector<Vehicle::snapshot> trajectory,
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     double closest = data.actual_closest_approach;
     cout << "actual closest " << closest << endl;
-    if (closest < 5) {
+    if (closest < 15) {
       return 3 * DANGER;
     }
 
@@ -68,7 +68,6 @@ namespace pathplanner {
 
     double multiplier = 1.0 - pow((closest / DESIRED_BUFFER), 2);
     return multiplier * DANGER;
-    return 0;
   }
 
   double Estimator::calculate_cost(vector<Vehicle::snapshot> trajectory,
@@ -160,7 +159,7 @@ namespace pathplanner {
 
     double collide_car_v = s_now.get_velocity();
     //cout << " lane " << snap.lane << " s " << s << " v " << v << " or_s " << snap.original_s << " col_v " << collide_car_v << endl;
-    if (snap.original_s <= s_now.s && s_now.s <= s) {
+    if (snap.original_s-MANOEUVRE <= s_now.s && s_now.s <= s + MANOEUVRE) {
       return true;
     }
     if (snap.original_s > s_now.s) {

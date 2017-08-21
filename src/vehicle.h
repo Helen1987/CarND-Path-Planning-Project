@@ -18,7 +18,7 @@ namespace pathplanner {
     double const TIME_INTERVAL = 0.02;
     double const LANE_WIDTH = 4.0;
     double const MIDDLE_LANE = LANE_WIDTH/2;
-    double const SAFE_DISTANCE = 15.0;
+    double const SAFE_DISTANCE = 10.0;
     //double const TOO_SHORT_DISTANCE = 15.0;
     double const SPEED_INCREMENT = .224;
     double const PREDICTION_INTERVAL = 0.5;

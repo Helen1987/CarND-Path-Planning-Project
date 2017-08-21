@@ -315,11 +315,11 @@ namespace pathplanner {
   }
 
   bool Vehicle::is_behind_of(prediction pred, int lane) {
-    return pred.is_in_lane(lane) && (pred.s > original_s && (pred.s - original_s) < 4*SAFE_DISTANCE);
+    return pred.is_in_lane(lane) && (pred.s > original_s && (pred.s - original_s) < 6*SAFE_DISTANCE);
   }
 
   bool Vehicle::is_close_to(prediction pred, int lane) {
-    return pred.is_in_lane(lane) && pred.s > original_s && (pred.s < s || (pred.s - s) < SAFE_DISTANCE);
+    return pred.is_in_lane(lane) && pred.s > original_s && (pred.s - s < SAFE_DISTANCE);
   }
 
   bool Vehicle::is_interrupted(prediction pred, int lane) {
@@ -373,7 +373,7 @@ namespace pathplanner {
   }
 
   void Vehicle::_update_ref_speed_for_lane(map<int, vector<prediction>> predictions, int cur_lane, bool verbosity) {
-    bool too_close = false, keep_speed = false;
+    bool too_close = false, keep_speed = false, danger = false;
     double max_speed = MAX_SPEED;
     double velocity = get_velocity();
 
@@ -403,18 +403,30 @@ namespace pathplanner {
           cout << "pred d: " << pred.d << " my lane: " << cur_lane;
           cout << " pred s: " << pred.s << " my s: " << s << endl;
         }
+        if (pred.s < s) {
+          cout << "danger" << endl;
+          danger = true;
+        }
         too_close = true;
       }
     }
 
-    if (too_close && velocity > 2*max_speed/3) {
-      velocity -= SPEED_INCREMENT;
+    if (too_close){
+      if (danger) {
+        velocity -= SPEED_INCREMENT;
+      }
+      else if (velocity > max_speed / 2) {
+        double predicted_distance = (velocity - max_speed)*TIME_INTERVAL;
+        if (predicted_distance < SAFE_DISTANCE && velocity > 15.0) {
+          velocity -= SPEED_INCREMENT;
+        }
+      }
     }
     else {
       if (velocity < max_speed - SPEED_INCREMENT) {
         velocity += SPEED_INCREMENT;
       }
-      else if (velocity > max_speed + SPEED_INCREMENT) {
+      else if (velocity > max_speed + SPEED_INCREMENT && velocity > 20.0) {
         velocity -= SPEED_INCREMENT;
       }
     }
@@ -484,12 +496,12 @@ namespace pathplanner {
       //cout << "was vel: " << velocity;
       if (delta_s < SAFE_DISTANCE/2 && delta_v < -0.01)
       {
-        if (abs(delta_v) < SPEED_INCREMENT) {
+        //if (abs(delta_v) < SPEED_INCREMENT) {
           velocity += SPEED_INCREMENT;
-        }
-        else {
-          velocity += 2 * SPEED_INCREMENT;
-        }
+        //}
+        //else {
+        //  velocity += 2 * SPEED_INCREMENT;
+        //}
         //cout << " realize_prep_lane_change " << ref_vel << endl;
       }
       else {
