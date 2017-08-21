@@ -36,7 +36,7 @@ namespace pathplanner {
       double time_til_collision = 0;
       double exponent = time_til_collision*time_til_collision;
       double mult = exp(-exponent);
-      cout << " collision: " << mult * COLLISION << " on step: " << data.collides.step << endl;
+      //cout << " collision: " << mult * COLLISION << " on step: " << data.collides.step << endl;
       return mult * COLLISION;
     }
     return 0;
@@ -45,7 +45,7 @@ namespace pathplanner {
   double Estimator::free_line_cost(vector<Vehicle::snapshot> trajectory,
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     double closest = data.prop_closest_approach;
-    cout << "prop closest " << closest << endl;
+    //cout << "prop closest " << closest << endl;
     if (closest > 85) {
       return 0.0;
     }
@@ -56,8 +56,8 @@ namespace pathplanner {
   double Estimator::buffer_cost(vector<Vehicle::snapshot> trajectory,
     map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const {
     double closest = data.actual_closest_approach;
-    cout << "actual closest " << closest << endl;
-    if (closest < 15) {
+    //cout << "actual closest " << closest << endl;
+    if (closest < 25) {
       return 3 * DANGER;
     }
 
@@ -175,8 +175,8 @@ namespace pathplanner {
         return false;
       }
     }
-    cout << "4 clause" << " s " << s << " v " << v << " or_s " << snap.original_s << " col_v " << collide_car_v << endl;
-    s_now.display();
+    //cout << "4 clause" << " s " << s << " v " << v << " or_s " << snap.original_s << " col_v " << collide_car_v << endl;
+    //s_now.display();
 
     return true;
     throw invalid_argument("Incorrect s coordinate for predicted trajectory");

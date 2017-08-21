@@ -56,7 +56,7 @@ namespace pathplanner {
       int const EFFICIENCY = pow(10, 3);
       double const MAX_SPEED = 49.5;
 
-      double const DESIRED_BUFFER = 35;
+      double const DESIRED_BUFFER = 40;
       int const PLANNING_HORIZON = 2;
 
       double const PREDICTION_INTERVAL = 0.5;

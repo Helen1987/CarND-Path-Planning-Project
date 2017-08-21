@@ -117,7 +117,7 @@ namespace pathplanner {
       Vehicle::estimate estimate = Vehicle::estimate();
       estimate.state = state;
       auto trajectory = trajectory_for_state(state, predictions);
-      estimate.cost = estimator.calculate_cost(trajectory, predictions, state, true);
+      estimate.cost = estimator.calculate_cost(trajectory, predictions, state, false);
       costs.push_back(estimate);
     }
     auto best = min_element(std::begin(costs), std::end(costs),
@@ -125,8 +125,8 @@ namespace pathplanner {
       return est1.cost < est2.cost;
     });
     //if ((*best).state != KL) {
-      cout << "best estimate: " << (*best).cost << " in state " << (*best).state << " speed " 
-        << get_velocity() << " lane: " << lane << endl;
+      //cout << "best estimate: " << (*best).cost << " in state " << (*best).state << " speed " 
+      //  << get_velocity() << " lane: " << lane << endl;
     //}
     return (*best).state;
   }
@@ -390,8 +390,8 @@ namespace pathplanner {
 
       if (is_behind_of(pred, cur_lane) && pred.get_velocity() < max_speed) {
         if (verbosity) {
-          cout << "max speed updated to: " << pred.get_velocity() << endl;
-          pred.display();
+          //cout << "max speed updated to: " << pred.get_velocity() << endl;
+          //pred.display();
         }
         // follow the car behavior
         max_speed = pred.get_velocity() - SPEED_INCREMENT;
@@ -404,7 +404,7 @@ namespace pathplanner {
           cout << " pred s: " << pred.s << " my s: " << s << endl;
         }
         if (pred.s < s) {
-          cout << "danger" << endl;
+          //cout << "danger" << endl;
           danger = true;
         }
         too_close = true;
@@ -426,7 +426,7 @@ namespace pathplanner {
       if (velocity < max_speed - SPEED_INCREMENT) {
         velocity += SPEED_INCREMENT;
       }
-      else if (velocity > max_speed + SPEED_INCREMENT && velocity > 20.0) {
+      else if (velocity > max_speed + SPEED_INCREMENT && velocity > 25.0) {
         velocity -= SPEED_INCREMENT;
       }
     }
