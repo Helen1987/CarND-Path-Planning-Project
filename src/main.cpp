@@ -12,11 +12,13 @@
 #include "libs/spline.h"
 #include "vehicle.h"
 #include "trajectory.h"
+#include "helper_functions.h"
 
 
 using namespace std;
 using namespace pathplanner;
 using namespace std::chrono;
+using namespace helpers;
 
 // for convenience
 using json = nlohmann::json;
@@ -132,11 +134,25 @@ int main() {
           trajectory.set_previous_path(previous_path_x, previous_path_y);
 
           json msgJson;
+          double TIME_INTERVAL = 0.02;
           //cout << j << endl;
 
           int prev_size = previous_path_x.size();
+          double original_s = 0, original_d = 0, original_yaw = 0, original_vx = 0, original_vy = 0;
 
           if (prev_size > 0) {
+            double ref_x = previous_path_x[1];
+            double ref_y = previous_path_y[1];
+
+            double ref_x_prev = previous_path_x[0];
+            double ref_y_prev = previous_path_y[0];
+            original_vx = (ref_x - car_x) / TIME_INTERVAL;
+            original_vy = (ref_y - car_y) / TIME_INTERVAL;
+            original_yaw = atan2(ref_y - ref_y_prev, ref_x - ref_x_prev);
+            vector<double> frenet = getFrenet(ref_x_prev, ref_y_prev, original_yaw, map_waypoints_x, map_waypoints_y);
+            original_s = frenet[0];
+            original_d = frenet[1];
+
             car_s = end_path_s;
           }
           //cout << "ego car: " << endl;
@@ -174,6 +190,8 @@ int main() {
             }
           }
           //cout << "update ego car " << car_speed << endl;
+          ego_car.original_s = original_s;
+          ego_car.original_v = sqrt(original_vx*original_vx + original_vy*original_vy);
           ego_car.is_run_mode = false;
           ego_car.update_params(car_x, car_y, car_yaw, car_s, car_d, diff);
           ego_car.update_state(predictions, 3);
@@ -184,6 +202,12 @@ int main() {
             normal_mode = true;
           }
           catch (invalid_argument ex) {
+            car_x = previous_path_x[0];
+            car_y = previous_path_y[0];
+            car_s = original_s;
+            car_yaw = rad2deg(original_yaw);
+
+            ego_car.update_yaw(car_x, car_y, original_vx, original_vy, original_s, original_d, TIME_INTERVAL);
             normal_mode = false;
           }
           //cout << "state: " << ego_car.state << " ref_vel: " << ego_car.get_velocity() << " lane: " << ego_car.lane << endl;

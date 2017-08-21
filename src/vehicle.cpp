@@ -175,6 +175,8 @@ namespace pathplanner {
     snapshot_temp.state = this->state;
     snapshot_temp.lane = this->lane;
     snapshot_temp.proposed_lane = this->proposed_lane;
+    snapshot_temp.original_s = original_s;
+    snapshot_temp.original_v = original_v;
     //snapshot_temp.ref_vel = this->ref_vel;
 
     return snapshot_temp;
@@ -192,6 +194,8 @@ namespace pathplanner {
     this->ddy = snapshot.ddy;
     this->yaw = snapshot.yaw;
     this->state = snapshot.state;
+    this->original_s = snapshot.original_s;
+    this->original_v = snapshot.original_v;
     //this->ref_vel = snapshot.ref_vel;
     this->lane = snapshot.lane;
     this->proposed_lane = snapshot.proposed_lane;
@@ -207,7 +211,8 @@ namespace pathplanner {
     cout << " vx:    " << this->dx;
     cout << " vy:    " << this->dy;
     cout << " ax:    " << this->ddx;
-    cout << " ay:    " << this->ddy << endl;
+    cout << " ay:    " << this->ddy;
+    cout << " line: " << this->lane << endl;
   }
 
   void Vehicle::update_params(double x, double y, double yaw, double s, double d, double diff) {
@@ -297,17 +302,26 @@ namespace pathplanner {
   }
 
   bool Vehicle::is_behind_of(prediction pred, int lane) {
-    return pred.is_in_lane(lane) && pred.s > s && (pred.s - s) < 1.5*SAFE_DISTANCE;
+    return pred.is_in_lane(lane) && pred.s + 1 > s && (pred.s + 1 - s) < 1.5*SAFE_DISTANCE;
   }
 
   bool Vehicle::is_close_to(prediction pred, int lane) {
     //double MANOEUVRE = 50 * TIME_INTERVAL* get_velocity() + 2;
-    return pred.is_in_lane(lane) && pred.s > s && pred.s - s < SAFE_DISTANCE;
+    return pred.is_in_lane(lane) && pred.s + 1 > s && pred.s + 1 - s < SAFE_DISTANCE;
   }
 
   bool Vehicle::is_interrupted(prediction pred, int lane) {
-    //double MANOEUVRE = 50 * TIME_INTERVAL* get_velocity() + 2;
-    return pred.is_in_lane(lane) && s > pred.s && s - pred.s  < PREDICTION_DISTANCE;
+    //double vel = get_velocity();
+    //double PREDICTION_DISTANCE = prev_size * TIME_INTERVAL* get_velocity();
+    bool is_in_line = pred.d < (4.0 * (lane + 1) - 1.2) && pred.d >(4.0 * lane + 1.2);
+    bool is_injected = is_in_line && original_s < pred.s && s > pred.s;
+    if (is_injected) {
+      cout << "injected: " << original_s;
+      pred.display();
+      cout << "into car";
+      display();
+    }
+    return is_injected;
   }
 
   void Vehicle::realize_state(map<int, vector<prediction>> predictions, bool verbosity) {
@@ -348,7 +362,7 @@ namespace pathplanner {
     ddy = 0;
   }
 
-  void Vehicle::_update_ref_speed_for_lane(map<int, vector<prediction>> predictions, int lane, bool verbosity) {
+  void Vehicle::_update_ref_speed_for_lane(map<int, vector<prediction>> predictions, int cur_lane, bool verbosity) {
     bool too_close = false, keep_speed = false;
     double max_speed = MAX_SPEED;
     double velocity = get_velocity();
@@ -356,7 +370,7 @@ namespace pathplanner {
     for (auto pair : predictions) {
       prediction pred = pair.second[0];
       if (is_run_mode) {
-        if (is_interrupted(pred, lane)) {
+        if (is_interrupted(pred, cur_lane)) { //&& cur_lane == proposed_lane)
           velocity -= SPEED_INCREMENT;
           set_velocity(velocity, PREDICTION_INTERVAL);
           cout << "Car injected into lane!!! " << velocity << endl;
@@ -364,7 +378,7 @@ namespace pathplanner {
         }
       }
 
-      if (is_behind_of(pred, lane) && pred.get_velocity() < max_speed) {
+      if (is_behind_of(pred, cur_lane) && pred.get_velocity() < max_speed) {
         if (verbosity) {
           cout << "max speed updated to: " << pred.get_velocity() << endl;
           pred.display();
@@ -374,9 +388,9 @@ namespace pathplanner {
         keep_speed = true;
       }
 
-      if (is_close_to(pred, lane)) {
+      if (is_close_to(pred, cur_lane)) {
         if (verbosity) {
-          cout << "pred d: " << pred.d << " my lane: " << lane;
+          cout << "pred d: " << pred.d << " my lane: " << cur_lane;
           cout << " pred s: " << pred.s << " my s: " << s << endl;
         }
         too_close = true;

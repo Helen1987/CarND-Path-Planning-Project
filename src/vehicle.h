@@ -24,7 +24,7 @@ namespace pathplanner {
     double const PREDICTION_INTERVAL = 0.5;
     //double const MANOEUVRE = 10;
     double const MANOEUVRE = 4;
-    double const PREDICTION_DISTANCE = 20;
+    //double const PREDICTION_DISTANCE = 20;
 
     double x;
     double y;
@@ -117,6 +117,8 @@ namespace pathplanner {
       //double ref_vel;
       int lane;
       int proposed_lane;
+      double original_s;
+      double original_v;
 
       string state;
 
@@ -136,6 +138,8 @@ namespace pathplanner {
     };
 
     bool is_run_mode = false;
+    double original_s = 0;
+    double original_v = 0;
 
     bool shouldPredict() {
       return updates > 10;
