@@ -13,6 +13,7 @@
 #include "vehicle.h"
 #include "trajectory.h"
 #include "helper_functions.h"
+#include "map.h"
 
 
 using namespace std;
@@ -39,15 +40,10 @@ string hasData(string s) {
   return "";
 }
 
+Map map_info;
+
 int main() {
   uWS::Hub h;
-
-  // Load up map values for waypoint's x,y,s and d normalized normal vectors
-  vector<double> map_waypoints_x;
-  vector<double> map_waypoints_y;
-  vector<double> map_waypoints_s;
-  vector<double> map_waypoints_dx;
-  vector<double> map_waypoints_dy;
 
   // Waypoint map to read from
   string map_file_ = "../data/highway_map.csv";
@@ -69,11 +65,7 @@ int main() {
     iss >> s;
     iss >> d_x;
     iss >> d_y;
-    map_waypoints_x.push_back(x);
-    map_waypoints_y.push_back(y);
-    map_waypoints_s.push_back(s);
-    map_waypoints_dx.push_back(d_x);
-    map_waypoints_dy.push_back(d_y);
+    map_info.add_waypoints(x, y, s, d_x, d_y);
   }
 
   //int lane = 1;
