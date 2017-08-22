@@ -50,7 +50,7 @@ namespace pathplanner {
       return 0.0;
     }
     double multiplier = (MAX_DISTANCE - closest) / MAX_DISTANCE;
-    return 20 * multiplier * EFFICIENCY;
+    return 13 * multiplier * EFFICIENCY;
   }
 
   double Estimator::buffer_cost(vector<Vehicle::snapshot> trajectory,
