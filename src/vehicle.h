@@ -41,7 +41,7 @@ namespace pathplanner {
       double cost;
     };
 
-    void set_velocity(double ref_vel, double diff) {
+    /*void set_velocity(double ref_vel, double diff) {
       //cout << "new vel: " << ref_vel << " old dx: " << this->dx << " old dy: " << this->dy << endl;
       double new_vx = ref_vel*cos(this->yaw);
       double new_vy = ref_vel*sin(this->yaw);
@@ -56,7 +56,7 @@ namespace pathplanner {
       this->dx = new_vx;
       this->dy = new_vy;
       //cout << "updated vel: " << get_velocity() << " new dx: " << this->dx << " new dy: " << this->dy << endl;
-    }
+    }*/
 
     /*bool is_in_the_same_lane(double other_d) {
       return (other_d < LANE_WIDTH * (lane + 1)) && (other_d > LANE_WIDTH * lane);
@@ -64,10 +64,6 @@ namespace pathplanner {
 
   public:
     double const MAX_SPEED = 49.5;
-
-    static vector<double> map_waypoints_x;
-    static vector<double> map_waypoints_y;
-    static vector<double> map_waypoints_s;
 
     int id;
     double s;

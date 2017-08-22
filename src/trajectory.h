@@ -13,7 +13,7 @@ namespace pathplanner {
         double y;
       };
 
-      Trajectory(vector<double> map_waypoints_s, vector<double> map_waypoints_x, vector<double> map_waypoints_y);
+      Trajectory();
       
       virtual ~Trajectory() {}
 
@@ -30,7 +30,7 @@ namespace pathplanner {
 
       void set_previous_path(vector<double> previous_path_x, vector<double> previous_path_y);
       void generate_trajectory(double car_s, double car_x, double car_y, 
-        double car_yaw, int lane, double ref_vel, bool normal_mode);
+        double car_yaw, int lane, double ref_vele);
 
     private:
 
@@ -50,7 +50,7 @@ namespace pathplanner {
 
       Coord convert2global(double x, double y);
 
-      void update_trajectory(vector<double> ptsx, vector<double> ptsy, double ref_vel, bool normal_mode);
+      void update_trajectory(vector<double> ptsx, vector<double> ptsy, double ref_vel);
 
   };
 

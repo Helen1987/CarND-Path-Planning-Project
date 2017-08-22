@@ -9,15 +9,12 @@
 #include <iterator>
 #include <algorithm>
 #include "estimator.h"
+#include "map.h"
 
 
 
 namespace pathplanner {
   using namespace helpers;
-
-  vector<double> Vehicle::map_waypoints_s;
-  vector<double> Vehicle::map_waypoints_y;
-  vector<double> Vehicle::map_waypoints_x;
 
   Vehicle::Vehicle(int id, double x, double y, double dx, double dy, double s, double d) {
 
@@ -278,9 +275,9 @@ namespace pathplanner {
     }
     double new_angle = atan2(dy, dx);
     this->yaw = (new_angle < 0.1) ? 0 : new_angle;
-    vector<double> frenet = getFrenet(this->x, this->y, this->yaw, Vehicle::map_waypoints_x, Vehicle::map_waypoints_y);
-    this->s = frenet[0];
-    this->d = frenet[1];
+    Frenet frenet = Map.getFrenet(this->x, this->y, this->yaw);
+    this->s = frenet.s;
+    this->d = frenet.d;
   }
 
   Vehicle::prediction Vehicle::state_at(double t) {
@@ -304,9 +301,9 @@ namespace pathplanner {
     }
     double new_angle = atan2(pred.vy, pred.vx);
     double yaw = (new_angle < 0.1) ? 0 : new_angle;
-    vector<double> frenet = getFrenet(x, y, yaw, Vehicle::map_waypoints_x, Vehicle::map_waypoints_y);
-    pred.s = frenet[0];
-    pred.d = frenet[1];
+    Frenet frenet = Map.getFrenet(x, y);
+    pred.s = frenet.s;
+    pred.d = frenet.d;
     return pred;
   }
 

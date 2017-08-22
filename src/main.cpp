@@ -40,8 +40,6 @@ string hasData(string s) {
   return "";
 }
 
-Map map_info;
-
 int main() {
   uWS::Hub h;
 
@@ -65,18 +63,14 @@ int main() {
     iss >> s;
     iss >> d_x;
     iss >> d_y;
-    map_info.add_waypoints(x, y, s, d_x, d_y);
+    Map.add_waypoints(x, y, s, d_x, d_y);
   }
 
   //int lane = 1;
   //double ref_vel = 0.0;//mps
-  Trajectory trajectory = Trajectory(map_waypoints_s, map_waypoints_x, map_waypoints_y);
+  Trajectory trajectory = Trajectory();
   Vehicle ego_car = Vehicle(-1);
   map<int, Vehicle*> vehicles;
-
-  Vehicle::map_waypoints_s = map_waypoints_s;
-  Vehicle::map_waypoints_x = map_waypoints_x;
-  Vehicle::map_waypoints_y = map_waypoints_y;
 
   milliseconds ms = duration_cast<milliseconds>(
     system_clock::now().time_since_epoch()
@@ -141,7 +135,7 @@ int main() {
             original_vx = (ref_x - car_x) / TIME_INTERVAL;
             original_vy = (ref_y - car_y) / TIME_INTERVAL;
             original_yaw = atan2(ref_y - ref_y_prev, ref_x - ref_x_prev);
-            vector<double> frenet = getFrenet(ref_x_prev, ref_y_prev, original_yaw, map_waypoints_x, map_waypoints_y);
+            vector<double> frenet = Map.getFrenet(ref_x_prev, ref_y_prev, original_yaw);
             original_s = frenet[0];
             original_d = frenet[1];
 
@@ -188,23 +182,11 @@ int main() {
           ego_car.update_params(car_x, car_y, car_yaw, car_s, car_d, diff);
           ego_car.update_state(predictions, 3);
           ego_car.is_run_mode = true;
-          bool normal_mode = false;
-          try {
-            ego_car.realize_state(predictions, false);
-            normal_mode = true;
-          }
-          catch (invalid_argument ex) {
-            car_x = previous_path_x[0];
-            car_y = previous_path_y[0];
-            car_s = original_s;
-            car_yaw = rad2deg(original_yaw);
 
-            ego_car.reset(car_x, car_y, original_vx, original_vy, original_s, original_d);
-            normal_mode = false;
-          }
+          ego_car.realize_state(predictions, false);
           //cout << "state: " << ego_car.state << " ref_vel: " << ego_car.get_velocity() << " lane: " << ego_car.lane << endl;
 
-          trajectory.generate_trajectory(car_s, car_x, car_y, car_yaw, ego_car.lane, ego_car.get_velocity(), normal_mode);
+          trajectory.generate_trajectory(car_s, car_x, car_y, car_yaw, ego_car.lane, ego_car.get_velocity());
 
           msgJson["next_x"] = trajectory.next_x_vals;
           msgJson["next_y"] = trajectory.next_y_vals;
