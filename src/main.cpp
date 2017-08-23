@@ -14,6 +14,7 @@
 #include "trajectory.h"
 #include "helper_functions.h"
 #include "map.h"
+#include "FSM.h"
 
 
 using namespace std;
@@ -40,6 +41,7 @@ string hasData(string s) {
   return "";
 }
 
+
 int main() {
   uWS::Hub h;
 
@@ -63,20 +65,20 @@ int main() {
     iss >> s;
     iss >> d_x;
     iss >> d_y;
-    Map.add_waypoints(x, y, s, d_x, d_y);
+    Map::add_waypoints(x, y, s, d_x, d_y);
   }
 
   //int lane = 1;
   //double ref_vel = 0.0;//mps
   Trajectory trajectory = Trajectory();
   Vehicle ego_car = Vehicle(-1);
+  FSM fsm = FSM(ego_car);
   map<int, Vehicle*> vehicles;
 
   milliseconds ms = duration_cast<milliseconds>(
     system_clock::now().time_since_epoch()
   );
-  h.onMessage([&trajectory, &ego_car, &max_s, &ms, &vehicles,
-    &map_waypoints_x, &map_waypoints_y, &map_waypoints_s, &map_waypoints_dx, &map_waypoints_dy](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
+  h.onMessage([&trajectory, &max_s, &ms, &vehicles, &fsm](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
     uWS::OpCode opCode) {
     // "42" at the start of the message means there's a websocket message event.
     // The 4 signifies a websocket message
@@ -100,12 +102,12 @@ int main() {
           // j[1] is the data JSON object
 
           // Main car's localization Data
-          double car_x = j[1]["x"];
-          double car_y = j[1]["y"];
-          double car_s = j[1]["s"];
-          double car_d = j[1]["d"];
-          double car_yaw = j[1]["yaw"];
-          double car_speed = j[1]["speed"];
+          double original_x = j[1]["x"];
+          double original_y = j[1]["y"];
+          double original_s = j[1]["s"];
+          double original_d = j[1]["d"];
+          double original_yaw = j[1]["yaw"];
+          double original_speed = j[1]["speed"];
 
           // Previous path data given to the Planner
           auto previous_path_x = j[1]["previous_path_x"];
@@ -122,12 +124,12 @@ int main() {
           json msgJson;
           double TIME_INTERVAL = 0.02;
           //cout << j << endl;
+          double car_s;
 
           int prev_size = previous_path_x.size();
-          double original_s = 0, original_d = 0, original_yaw = 0, original_vx = 0, original_vy = 0;
 
           if (prev_size > 0) {
-            double ref_x = previous_path_x[1];
+            /*double ref_x = previous_path_x[1];
             double ref_y = previous_path_y[1];
 
             double ref_x_prev = previous_path_x[0];
@@ -135,9 +137,9 @@ int main() {
             original_vx = (ref_x - car_x) / TIME_INTERVAL;
             original_vy = (ref_y - car_y) / TIME_INTERVAL;
             original_yaw = atan2(ref_y - ref_y_prev, ref_x - ref_x_prev);
-            vector<double> frenet = Map.getFrenet(ref_x_prev, ref_y_prev, original_yaw);
-            original_s = frenet[0];
-            original_d = frenet[1];
+            Frenet frenet = Map::getFrenet(ref_x_prev, ref_y_prev, original_yaw);
+            original_s = frenet.s;
+            original_d = frenet.d;*/
 
             car_s = end_path_s;
           }
@@ -146,7 +148,7 @@ int main() {
           // [car's unique ID, car's x position in map coordinates, car's y position in map coordinates, 
           // car's x velocity in m/s, car's y velocity in m/s, car's s position in frenet coordinates, 
           // car's d position in frenet coordinates.
-          map<int, vector<Vehicle::prediction>> predictions;
+          map<int, vector<prediction>> predictions;
           for (auto data: sensor_fusion) {
             // [id, x, y, dx, dy, s, d]
             Vehicle* vehicle = NULL;
@@ -160,7 +162,7 @@ int main() {
                 vehicle = vehicles[data[0]];
                 (*vehicle).update_yaw(data[1], data[2], data[3], data[4], data[5], data[6], diff);
                 if ((*vehicle).shouldPredict()) {
-                  vector<Vehicle::prediction> car_preds = (*vehicle).generate_predictions();
+                  vector<prediction> car_preds = (*vehicle).generate_predictions();
                   predictions[(*vehicle).id] = car_preds;
                 }
               }
@@ -176,17 +178,13 @@ int main() {
             }
           }
           //cout << "update ego car " << car_speed << endl;
-          ego_car.original_s = original_s;
-          ego_car.original_v = sqrt(original_vx*original_vx + original_vy*original_vy);
-          ego_car.is_run_mode = false;
-          ego_car.update_params(car_x, car_y, car_yaw, car_s, car_d, diff);
-          ego_car.update_state(predictions, 3);
-          ego_car.is_run_mode = true;
-
-          ego_car.realize_state(predictions, false);
+          fsm.ego_car.update_params(original_x, original_y, original_yaw, original_s, original_d, original_speed, diff);
+          fsm.car_s = car_s;
+          fsm.update_state(predictions);
+          fsm.realize_state(predictions);
           //cout << "state: " << ego_car.state << " ref_vel: " << ego_car.get_velocity() << " lane: " << ego_car.lane << endl;
 
-          trajectory.generate_trajectory(car_s, car_x, car_y, car_yaw, ego_car.lane, ego_car.get_velocity());
+          trajectory.generate_trajectory(car_s, original_x, original_y, original_yaw, fsm.ego_car.lane, fsm.ego_car.get_velocity());
 
           msgJson["next_x"] = trajectory.next_x_vals;
           msgJson["next_y"] = trajectory.next_y_vals;

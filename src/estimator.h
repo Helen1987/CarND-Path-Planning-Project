@@ -4,22 +4,28 @@
 #include <math.h>
 #include <functional>
 #include "vehicle.h"
-
+#include "FSM.h"
 
 namespace pathplanner {
   using namespace std;
+
+  struct estimate {
+    CarState state;
+    double cost;
+  };
 
   class Estimator
   {
     public:
 
-      Estimator() {}
+      Estimator(double car_s) {
+        car_s = car_s;
+      }
 
       virtual ~Estimator() {}
 
-      double calculate_cost(vector<Vehicle::snapshot> trajectory,
-        map<int, vector<Vehicle::prediction>>predictions, string state, bool verbose = false);
-
+      double calculate_cost(vector<snapshot> trajectory,
+        map<int, vector<prediction>>predictions, CarState state, bool verbose = false);
 
     private:
       struct collision {
@@ -32,15 +38,13 @@ namespace pathplanner {
         int proposed_lane;
         int current_lane;
         double avg_speed;
-        //double max_acceleration;
-        //double rms_acceleration;
         double prop_closest_approach;
         double actual_closest_approach;
         collision collides;
       };
 
-      typedef std::function<double(const Estimator&, vector<Vehicle::snapshot> trajectory,
-        map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data)> DelegateType;
+      typedef std::function<double(const Estimator&, vector<snapshot> trajectory,
+        map<int, vector<prediction>> predictions, TrajectoryData data)> DelegateType;
 
       vector<DelegateType> delegates = { (DelegateType)&Estimator::inefficiency_cost,
         (DelegateType)&Estimator::collision_cost,
@@ -68,28 +72,30 @@ namespace pathplanner {
       //double const PREDICTION_DISTANCE = 20;
       double const MAX_DISTANCE = 999999;
 
-      double change_lane_cost(vector<Vehicle::snapshot> trajectory,
-        map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const;
+      double car_s = 0;
 
-      double inefficiency_cost(vector<Vehicle::snapshot> trajectory,
-        map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const;
+      double change_lane_cost(vector<snapshot> trajectory,
+        map<int, vector<prediction>> predictions, TrajectoryData data) const;
 
-      double collision_cost(vector<Vehicle::snapshot> trajectory,
-        map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const;
+      double inefficiency_cost(vector<snapshot> trajectory,
+        map<int, vector<prediction>> predictions, TrajectoryData data) const;
 
-      double buffer_cost(vector<Vehicle::snapshot> trajectory,
-        map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const;
+      double collision_cost(vector<snapshot> trajectory,
+        map<int, vector<prediction>> predictions, TrajectoryData data) const;
 
-      double free_line_cost(vector<Vehicle::snapshot> trajectory,
-        map<int, vector<Vehicle::prediction>> predictions, TrajectoryData data) const;
+      double buffer_cost(vector<snapshot> trajectory,
+        map<int, vector<prediction>> predictions, TrajectoryData data) const;
 
-      TrajectoryData get_helper_data(vector<Vehicle::snapshot> trajectory,
-        map<int, vector<Vehicle::prediction>> predictions, string state);
+      double free_line_cost(vector<snapshot> trajectory,
+        map<int, vector<prediction>> predictions, TrajectoryData data) const;
 
-      bool check_collision(Vehicle::snapshot snap, Vehicle::prediction s_now, string checkstate);
+      TrajectoryData get_helper_data(vector<snapshot> trajectory,
+        map<int, vector<prediction>> predictions, CarState state);
 
-      map<int, vector<Vehicle::prediction>> filter_predictions_by_lane(
-        map<int, vector<Vehicle::prediction>> predictions, int lane);
+      bool check_collision(snapshot snap, prediction s_now, CarState checkstate);
+
+      map<int, vector<prediction>> filter_predictions_by_lane(
+        map<int, vector<prediction>> predictions, int lane);
   };
 
 }

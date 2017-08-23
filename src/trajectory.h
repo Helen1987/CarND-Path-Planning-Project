@@ -1,18 +1,15 @@
 #ifndef TRAJECTORY_H_
 #define TRAJECTORY_H_
 #include <vector>
+#include "map.h"
 
 namespace pathplanner {
   using namespace std;
+  using namespace helpers;
 
   class Trajectory
   {
     public:
-      struct Coord {
-        double x;
-        double y;
-      };
-
       Trajectory();
       
       virtual ~Trajectory() {}
@@ -39,10 +36,6 @@ namespace pathplanner {
       double const LANE_WIDTH = 4;
       double const MIDDLE_LANE = LANE_WIDTH/2;
       double const MIN_SPEED = 0.3;
-
-      vector<double> map_waypoints_x;
-      vector<double> map_waypoints_y;
-      vector<double> map_waypoints_s;
 
       double convert2mps(double mph) { return mph / 2.24; }
 

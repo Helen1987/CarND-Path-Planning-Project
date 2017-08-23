@@ -1,6 +1,14 @@
+#include <math.h>
+#include "helper_functions.h"
 #include "map.h"
 
 namespace helpers {
+
+  vector<double> Map::map_waypoints_x = vector<double>();
+  vector<double> Map::map_waypoints_y = vector<double>();
+  vector<double> Map::map_waypoints_s = vector<double>() ;
+  vector<double> Map::map_waypoints_dx = vector<double>();
+  vector<double> Map::map_waypoints_dy = vector<double>();
 
   Map::Map()
   {

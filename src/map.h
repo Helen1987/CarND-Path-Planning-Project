@@ -17,7 +17,7 @@ namespace helpers {
     double y;
   };
 
-  static class Map
+  class Map
   {
   public:
     Map();
@@ -42,8 +42,6 @@ namespace helpers {
     static int ClosestWaypoint(double x, double y);
     static double distance(double x1, double y1, double x2, double y2);
   };
-
-
 
 }
 

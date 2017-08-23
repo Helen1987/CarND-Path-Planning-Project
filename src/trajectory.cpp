@@ -26,7 +26,7 @@ namespace pathplanner {
     }
   }
 
-  Trajectory::Coord Trajectory::convert2global(double x, double y) {
+  Coord Trajectory::convert2global(double x, double y) {
 
     Coord coord;
     coord.x = (x*cos(ref_yaw) - y*sin(ref_yaw));
@@ -83,7 +83,7 @@ namespace pathplanner {
 
   }
 
-  void Trajectory::generate_trajectory(double car_s, double car_x, double car_y, double car_yaw, int lane, double ref_vel) {
+  void Trajectory::generate_trajectory(double car_s, double original_x, double original_y, double original_yaw, int lane, double ref_vel) {
     // Create a list of widly spaced waypoints (x,y), evenly spaced at 30 m
     // Later we will interpolate these waypoints with a spline and fill it in with more points tha control speed
     next_x_vals.clear();
@@ -98,24 +98,23 @@ namespace pathplanner {
       return;
     }
 
-    ref_x = car_x;
-    ref_y = car_y;
-    ref_yaw = deg2rad(car_yaw);
+    ref_x = original_x;
+    ref_y = original_y;
+    ref_yaw = deg2rad(original_yaw);
 
     int prev_size = previous_path_x.size();
 
-    if (prev_size < 2 || ref_vel < MIN_SPEED) {
-      car_yaw = 0;
-      ref_yaw = deg2rad(car_yaw);
+    if (prev_size < 2) {
+      ref_yaw = deg2rad(original_yaw);
       // Use two points that make the path tangent to the car
-      double prev_car_x = car_x - cos(car_yaw);
-      double prev_car_y = car_y - sin(car_yaw);
+      double prev_car_x = original_x - cos(original_yaw);
+      double prev_car_y = original_y - sin(original_yaw);
 
       ptsx.push_back(prev_car_x);
-      ptsx.push_back(car_x);
+      ptsx.push_back(original_x);
 
       ptsy.push_back(prev_car_y);
-      ptsy.push_back(car_y);
+      ptsy.push_back(original_y);
     }
     // use the previous path's end point as starting reference
     else {
@@ -135,9 +134,9 @@ namespace pathplanner {
     }
 
     // In Frenet add evenly 30m spaced points ahead of the starting reference
-    Coord next_wp0 = Map.getXY(car_s + DISTANCE, MIDDLE_LANE + LANE_WIDTH * lane);
-    Coord next_wp1 = Map.getXY(car_s + 2*DISTANCE, MIDDLE_LANE + LANE_WIDTH * lane);
-    Coord next_wp2 = Map.getXY(car_s + 3*DISTANCE, MIDDLE_LANE + LANE_WIDTH * lane);
+    Coord next_wp0 = Map::getXY(car_s + DISTANCE, MIDDLE_LANE + LANE_WIDTH * lane);
+    Coord next_wp1 = Map::getXY(car_s + 2*DISTANCE, MIDDLE_LANE + LANE_WIDTH * lane);
+    Coord next_wp2 = Map::getXY(car_s + 3*DISTANCE, MIDDLE_LANE + LANE_WIDTH * lane);
 
     ptsx.push_back(next_wp0.x);
     ptsx.push_back(next_wp1.x);
