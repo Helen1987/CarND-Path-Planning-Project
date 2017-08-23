@@ -178,8 +178,8 @@ int main() {
             }
           }
           //cout << "update ego car " << car_speed << endl;
-          fsm.ego_car.update_params(original_x, original_y, original_yaw, original_s, original_d, original_speed, diff);
           fsm.car_s = car_s;
+          fsm.ego_car.update_params(original_x, original_y, original_yaw, original_s, original_d, original_speed, diff);
           fsm.update_state(predictions);
           fsm.realize_state(predictions);
           //cout << "state: " << ego_car.state << " ref_vel: " << ego_car.get_velocity() << " lane: " << ego_car.lane << endl;

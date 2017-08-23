@@ -17,15 +17,14 @@ namespace pathplanner {
   class Estimator
   {
     public:
+      bool verbose = false;
 
-      Estimator(double car_s) {
-        car_s = car_s;
-      }
+      Estimator() { }
 
       virtual ~Estimator() {}
 
-      double calculate_cost(vector<snapshot> trajectory,
-        map<int, vector<prediction>>predictions, CarState state, bool verbose = false);
+      double calculate_cost(double car_s, vector<snapshot> trajectory,
+        map<int, vector<prediction>>predictions, CarState state);
 
     private:
       struct collision {
@@ -61,18 +60,16 @@ namespace pathplanner {
       double const MAX_SPEED = 49.5;
 
       double const DESIRED_BUFFER = 40;
-      int const PLANNING_HORIZON = 2;
+      int const PLANNING_HORIZON = 1;
 
       double const PREDICTION_INTERVAL = 0.5;
       double const INTERVAL = .02;
-      //double const DISTANCE = 30;
       double const LANE_WIDTH = 4.0;
       double const MIDDLE_LANE = LANE_WIDTH / 2;
       double const MANOEUVRE = 4;
-      //double const PREDICTION_DISTANCE = 20;
       double const MAX_DISTANCE = 999999;
 
-      double car_s = 0;
+      double car_s;
 
       double change_lane_cost(vector<snapshot> trajectory,
         map<int, vector<prediction>> predictions, TrajectoryData data) const;
@@ -89,10 +86,10 @@ namespace pathplanner {
       double free_line_cost(vector<snapshot> trajectory,
         map<int, vector<prediction>> predictions, TrajectoryData data) const;
 
-      TrajectoryData get_helper_data(vector<snapshot> trajectory,
+      TrajectoryData get_helper_data(double car_s, vector<snapshot> trajectory,
         map<int, vector<prediction>> predictions, CarState state);
 
-      bool check_collision(snapshot snap, prediction s_now, CarState checkstate);
+      bool check_collision(double car_s, snapshot snap, prediction s_now, CarState checkstate);
 
       map<int, vector<prediction>> filter_predictions_by_lane(
         map<int, vector<prediction>> predictions, int lane);

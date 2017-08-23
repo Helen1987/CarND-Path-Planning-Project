@@ -25,6 +25,9 @@ namespace pathplanner {
     double d;
     double yaw;
     int lane;
+    int proposed_lane;
+    CarState state;
+    double ref_vel;
 
 
     double get_speed() {
@@ -79,6 +82,7 @@ namespace pathplanner {
     }
 
     int lane = 1;
+    int proposed_lane;
 
     struct collider {
       bool collision; // is there a collision?

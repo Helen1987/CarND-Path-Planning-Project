@@ -192,6 +192,7 @@ namespace pathplanner {
     this->state = snapshot.state;
     this->lane = snapshot.lane;
     this->ref_vel = snapshot.ref_vel;
+    this->proposed_lane = snapshot.proposed_lane;
   }
 
   snapshot Vehicle::get_snapshot() {
@@ -208,6 +209,7 @@ namespace pathplanner {
     snapshot_temp.state = this->state;
     snapshot_temp.lane = this->lane;
     snapshot_temp.ref_vel = this->ref_vel;
+    snapshot_temp.proposed_lane = this->proposed_lane;
 
     return snapshot_temp;
   }

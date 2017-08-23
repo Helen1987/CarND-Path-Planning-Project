@@ -76,21 +76,24 @@ namespace pathplanner {
     }
     //auto restore_snapshot = this->get_snapshot();
     auto costs = vector<estimate>();
-    Estimator estimator = Estimator(car_s);
+    cout << "car s : " << car_s << endl;
+    Estimator estimator = Estimator();
+    estimator.verbose = false;
     for (auto state : states) {
       estimate estimate;
       estimate.state = state;
       auto trajectory = trajectory_for_state(state, predictions, PREDICTIONS_COUNT);
-      estimate.cost = estimator.calculate_cost(trajectory, predictions, state, true);
+      estimate.cost = estimator.calculate_cost(car_s, trajectory, predictions, state);
       costs.push_back(estimate);
     }
     auto best = min_element(std::begin(costs), std::end(costs),
       [](estimate est1, estimate est2) {
       return est1.cost < est2.cost;
     });
-    //if ((*best).state != KL) {
-    //cout << "best estimate: " << (*best).cost << " in state " << as_integer((*best).state) << endl;
-    //}
+
+    if (verbosity) {
+      cout << "best estimate: " << (*best).cost << " in state " << as_integer((*best).state) << endl;
+    }
     return (*best).state;
   }
 
@@ -163,10 +166,6 @@ namespace pathplanner {
       prediction pred = pair.second[0];
 
       if (ego_car.is_behind_of(pred, checked_lane) && ego_car.ref_vel < max_speed) {
-        if (verbosity) {
-          //cout << "max speed updated to: " << pred.get_velocity() << endl;
-          //pred.display();
-        }
         // follow the car behavior
         max_speed = pred.get_velocity() - SPEED_INCREMENT;
         keep_speed = true;
@@ -178,7 +177,6 @@ namespace pathplanner {
           cout << " pred s: " << pred.s << " my s: " << ego_car.s << endl;
         }
         if (pred.s < car_s) {
-          //cout << "danger" << endl;
           danger = true;
         }
         too_close = true;
@@ -212,6 +210,7 @@ namespace pathplanner {
   }
 
   void FSM::realize_keep_lane(map<int, vector<prediction>> predictions) {
+    ego_car.proposed_lane = ego_car.lane;
     if (verbosity) {
       cout << "keep lane: " << ego_car.lane << " proposed lane: " << ego_car.lane << endl;
     }
@@ -225,11 +224,11 @@ namespace pathplanner {
       delta = 1;
     }
     ego_car.lane += delta;
-    int lane = ego_car.lane;
+    ego_car.proposed_lane = ego_car.lane;
     if (verbosity) {
-      cout << "lane change: " << ego_car.lane << " proposed lane: " << lane << endl;
+      cout << "lane change: " << ego_car.lane << " proposed lane: " << ego_car.proposed_lane << endl;
     }
-    _update_ref_speed_for_lane(predictions, lane);
+    _update_ref_speed_for_lane(predictions, ego_car.proposed_lane);
   }
 
   void FSM::realize_prep_lane_change(map<int, vector<prediction>> predictions, string direction) {
@@ -238,16 +237,16 @@ namespace pathplanner {
     {
       delta = 1;
     }
-    int lane = ego_car.lane + delta;
+    ego_car.proposed_lane = ego_car.lane + delta;
     if (verbosity) {
-      cout << "prep lane change: " << ego_car.lane << " proposed lane: " << lane << endl;
+      cout << "prep lane change: " << ego_car.lane << " proposed lane: " << ego_car.proposed_lane << endl;
     }
 
     vector<vector<prediction>> at_behind;
     for (auto pair : predictions) {
       int v_id = pair.first;
       vector<prediction> v = pair.second;
-      if (ego_car.is_in_front_of(v[0], lane)) {
+      if (ego_car.is_in_front_of(v[0], ego_car.proposed_lane)) {
         at_behind.push_back(v);
       }
     }
