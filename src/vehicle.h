@@ -24,10 +24,8 @@ namespace pathplanner {
     double s;
     double d;
     double yaw;
-    //double ref_vel;
     int lane;
 
-    //CarState state;
 
     double get_speed() {
       return sqrt(dx*dx + dy*dy);
@@ -73,7 +71,8 @@ namespace pathplanner {
     double yaw;
     double s;
     double d;
-    //double ref_vel;
+    double ref_vel = 0.0;
+    CarState state = CarState::CS;
 
     double get_velocity() {
       return sqrt(dx*dx + dy*dy);
@@ -94,7 +93,7 @@ namespace pathplanner {
 
     int max_acceleration;
 
-    CarState state;
+    
 
     Vehicle(int id);
 

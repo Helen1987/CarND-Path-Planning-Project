@@ -44,21 +44,21 @@ namespace pathplanner {
     }
 
     */
-    this->state = get_next_state(predictions);
+    ego_car.state = get_next_state(predictions);
   }
 
   CarState FSM::get_next_state(map<int, vector<prediction>> predictions) {
     vector<CarState> states;
-    if (state == CarState::PLCR) {
+    if (ego_car.state == CarState::PLCR) {
       states = vector<CarState>{ CarState::KL, CarState::PLCR, CarState::LCR };
     }
-    else if (state == CarState::PLCL) {
+    else if (ego_car.state == CarState::PLCL) {
       states = vector<CarState>{ CarState::KL, CarState::PLCL, CarState::LCL };
     }
-    else if (state == CarState::LCR) {
+    else if (ego_car.state == CarState::LCR) {
       states = vector<CarState>{ CarState::KL };
     }
-    else if (state == CarState::LCL) {
+    else if (ego_car.state == CarState::LCL) {
       states = vector<CarState>{ CarState::KL };
     }
     else {
@@ -81,7 +81,7 @@ namespace pathplanner {
       estimate estimate;
       estimate.state = state;
       auto trajectory = trajectory_for_state(state, predictions, PREDICTIONS_COUNT);
-      estimate.cost = estimator.calculate_cost(trajectory, predictions, state, false);
+      estimate.cost = estimator.calculate_cost(trajectory, predictions, state, true);
       costs.push_back(estimate);
     }
     auto best = min_element(std::begin(costs), std::end(costs),
@@ -89,8 +89,7 @@ namespace pathplanner {
       return est1.cost < est2.cost;
     });
     //if ((*best).state != KL) {
-    //cout << "best estimate: " << (*best).cost << " in state " << (*best).state << " speed " 
-    //  << get_velocity() << " lane: " << lane << endl;
+    //cout << "best estimate: " << (*best).cost << " in state " << as_integer((*best).state) << endl;
     //}
     return (*best).state;
   }
@@ -100,7 +99,7 @@ namespace pathplanner {
     auto initial_snapshot = ego_car.get_snapshot();
 
     // pretend to be in new proposed state
-    //ego_car.state = state;
+    ego_car.state = state;
     vector<snapshot> trajectory = { initial_snapshot };
     for (int i = 0; i < horizon; ++i) {
       ego_car.restore_state_from_snapshot(initial_snapshot);
@@ -127,7 +126,7 @@ namespace pathplanner {
     Given a state, realize it by adjusting acceleration and lane.
     Note - lane changes happen instantaneously.
     */
-    CarState state = this->state;
+    CarState state = this->ego_car.state;
     if (state == CarState::CS)
     {
       realize_constant_speed();
@@ -163,7 +162,7 @@ namespace pathplanner {
     for (auto pair : predictions) {
       prediction pred = pair.second[0];
 
-      if (ego_car.is_behind_of(pred, checked_lane) && ref_vel < max_speed) {
+      if (ego_car.is_behind_of(pred, checked_lane) && ego_car.ref_vel < max_speed) {
         if (verbosity) {
           //cout << "max speed updated to: " << pred.get_velocity() << endl;
           //pred.display();
@@ -185,7 +184,7 @@ namespace pathplanner {
         too_close = true;
       }
     }
-    double velocity = ref_vel;
+    double velocity = ego_car.ref_vel;
     if (too_close) {
       if (danger) {
         velocity -= SPEED_INCREMENT;
@@ -209,7 +208,7 @@ namespace pathplanner {
     if (velocity < 0) {
       velocity = 0;
     }
-    ref_vel = velocity;
+    ego_car.ref_vel = velocity;
   }
 
   void FSM::realize_keep_lane(map<int, vector<prediction>> predictions) {
@@ -264,7 +263,7 @@ namespace pathplanner {
         }
       }
       double target_vel = (nearest_behind[1].s - nearest_behind[0].s) / PREDICTION_INTERVAL;
-      double velocity = ref_vel;
+      double velocity = ego_car.ref_vel;
       double delta_v = velocity - target_vel;
       double delta_s = ego_car.s - nearest_behind[0].s;
       //cout << "was vel: " << velocity;
@@ -285,8 +284,12 @@ namespace pathplanner {
         velocity = MAX_SPEED;
       }
       //cout << " became vel: " << velocity << endl;
-      ref_vel = velocity;
+      ego_car.ref_vel = velocity;
     }
+  }
+
+  double FSM::get_expected_velocity() {
+    return ego_car.ref_vel;
   }
 
 }

@@ -124,7 +124,7 @@ int main() {
           json msgJson;
           double TIME_INTERVAL = 0.02;
           //cout << j << endl;
-          double car_s;
+          double car_s = original_s;
 
           int prev_size = previous_path_x.size();
 
@@ -184,7 +184,7 @@ int main() {
           fsm.realize_state(predictions);
           //cout << "state: " << ego_car.state << " ref_vel: " << ego_car.get_velocity() << " lane: " << ego_car.lane << endl;
 
-          trajectory.generate_trajectory(car_s, original_x, original_y, original_yaw, fsm.ego_car.lane, fsm.ego_car.get_velocity());
+          trajectory.generate_trajectory(car_s, original_x, original_y, original_yaw, fsm.ego_car.lane, fsm.get_expected_velocity());
 
           msgJson["next_x"] = trajectory.next_x_vals;
           msgJson["next_y"] = trajectory.next_y_vals;

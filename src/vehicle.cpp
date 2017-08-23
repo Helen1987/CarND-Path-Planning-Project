@@ -189,9 +189,9 @@ namespace pathplanner {
     this->ddx = snapshot.ddx;
     this->ddy = snapshot.ddy;
     this->yaw = snapshot.yaw;
-    //this->state = snapshot.state;
+    this->state = snapshot.state;
     this->lane = snapshot.lane;
-    //this->ref_vel = snapshot.ref_vel;
+    this->ref_vel = snapshot.ref_vel;
   }
 
   snapshot Vehicle::get_snapshot() {
@@ -205,9 +205,9 @@ namespace pathplanner {
     snapshot_temp.ddx = this->ddx;
     snapshot_temp.ddy = this->ddy;
     snapshot_temp.yaw = this->yaw;
-    //snapshot_temp.state = this->state;
+    snapshot_temp.state = this->state;
     snapshot_temp.lane = this->lane;
-    //snapshot_temp.ref_vel = this->ref_vel;
+    snapshot_temp.ref_vel = this->ref_vel;
 
     return snapshot_temp;
   }
