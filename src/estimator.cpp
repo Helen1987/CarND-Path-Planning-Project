@@ -9,6 +9,10 @@
 namespace pathplanner {
   using namespace std;
 
+  Estimator::Estimator(bool verbose) {
+    this->verbose = verbose;
+  }
+
   double Estimator::change_lane_cost(vector<snapshot> trajectory,
     map<int, vector<prediction>> predictions, TrajectoryData data) const {
 
@@ -151,7 +155,6 @@ namespace pathplanner {
       }
     }
 
-
     return data;
   }
 
@@ -165,7 +168,7 @@ namespace pathplanner {
       cout << " s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v 
         << "obsticle: " << s_now.s << endl;
     }
-    if (snap.s-MANOEUVRE <= s_now.s && s_now.s <= car_s + MANOEUVRE) {
+    if (snap.s- 2*MANOEUVRE <= s_now.s && s_now.s <= car_s + MANOEUVRE) {
       return true;
     }
     /*if (snap.s > s_now.s) {
@@ -190,7 +193,9 @@ namespace pathplanner {
     map<int, vector<prediction>> predictions, int lane) {
     map<int, vector<prediction>> filtered = {};
     for (auto pair: predictions) {
-      filtered[pair.first] = pair.second;
+      if (pair.second[0].is_in_lane(lane)) {
+        filtered[pair.first] = pair.second;
+      }
     }
     return filtered;
   }

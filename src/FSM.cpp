@@ -76,9 +76,7 @@ namespace pathplanner {
     }
     //auto restore_snapshot = this->get_snapshot();
     auto costs = vector<estimate>();
-    cout << "car s : " << car_s << endl;
-    Estimator estimator = Estimator();
-    estimator.verbose = false;
+    Estimator estimator = Estimator(false);
     for (auto state : states) {
       estimate estimate;
       estimate.state = state;
@@ -164,10 +162,10 @@ namespace pathplanner {
 
     for (auto pair : predictions) {
       prediction pred = pair.second[0];
-
-      if (ego_car.is_behind_of(pred, checked_lane) && ego_car.ref_vel < max_speed) {
+      double target_speed = pred.get_velocity();
+      if (ego_car.is_behind_of(pred, checked_lane) && target_speed < max_speed) {
         // follow the car behavior
-        max_speed = pred.get_velocity() - SPEED_INCREMENT;
+        max_speed = target_speed - SPEED_INCREMENT;
         keep_speed = true;
       }
 
@@ -187,18 +185,18 @@ namespace pathplanner {
       if (danger) {
         velocity -= SPEED_INCREMENT;
       }
-      else if (velocity > max_speed / 2) {
-        double predicted_distance = (velocity - max_speed)*TIME_INTERVAL;
-        if (predicted_distance < Vehicle::SAFE_DISTANCE && velocity > 15.0) {
-          velocity -= SPEED_INCREMENT;
-        }
+      else if (velocity > 2*max_speed / 3) {
+        //double predicted_distance = (velocity - max_speed)*TIME_INTERVAL;
+        //if (predicted_distance < Vehicle::SAFE_DISTANCE) {
+        velocity -= SPEED_INCREMENT;
+        //}
       }
     }
     else {
       if (velocity < max_speed - SPEED_INCREMENT) {
         velocity += SPEED_INCREMENT;
       }
-      else if (velocity > max_speed + SPEED_INCREMENT && velocity > 32.0) {
+      else if (velocity > max_speed + SPEED_INCREMENT) {
         velocity -= SPEED_INCREMENT;
       }
     }

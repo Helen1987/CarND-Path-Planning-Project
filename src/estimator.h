@@ -17,9 +17,7 @@ namespace pathplanner {
   class Estimator
   {
     public:
-      bool verbose = false;
-
-      Estimator() { }
+      Estimator(bool verbose);
 
       virtual ~Estimator() {}
 
@@ -27,6 +25,8 @@ namespace pathplanner {
         map<int, vector<prediction>>predictions, CarState state);
 
     private:
+      bool verbose = false;
+
       struct collision {
         bool hasCollision = false;
         int step = 1000;
