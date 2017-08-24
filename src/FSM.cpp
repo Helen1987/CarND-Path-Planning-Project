@@ -7,6 +7,12 @@
 
 namespace pathplanner {
 
+  FSM::FSM(Vehicle& car) : ego_car(car) {
+    proposed_lane = car.lane;
+  };
+
+  FSM::~FSM() {};
+
   double FSM::PREDICTION_INTERVAL = 0.5;
 
   // TODO - Implement this method.
@@ -44,21 +50,21 @@ namespace pathplanner {
     }
 
     */
-    ego_car.state = get_next_state(predictions);
+    state = get_next_state(predictions);
   }
 
   CarState FSM::get_next_state(map<int, vector<prediction>> predictions) {
     vector<CarState> states;
-    if (ego_car.state == CarState::PLCR) {
+    if (state == CarState::PLCR) {
       states = vector<CarState>{ CarState::KL, CarState::PLCR, CarState::LCR };
     }
-    else if (ego_car.state == CarState::PLCL) {
+    else if (state == CarState::PLCL) {
       states = vector<CarState>{ CarState::KL, CarState::PLCL, CarState::LCL };
     }
-    else if (ego_car.state == CarState::LCR) {
+    else if (state == CarState::LCR) {
       states = vector<CarState>{ CarState::KL };
     }
-    else if (ego_car.state == CarState::LCL) {
+    else if (state == CarState::LCL) {
       states = vector<CarState>{ CarState::KL };
     }
     else {
@@ -74,7 +80,6 @@ namespace pathplanner {
     if (states.size() == 1) {
       return states[0];
     }
-    //auto restore_snapshot = this->get_snapshot();
     auto costs = vector<estimate>();
     Estimator estimator = Estimator(false);
     for (auto state : states) {
@@ -95,19 +100,19 @@ namespace pathplanner {
     return (*best).state;
   }
 
-  vector<snapshot> FSM::trajectory_for_state(CarState state, map<int, vector<prediction>> predictions, int horizon) {
+  vector<snapshot> FSM::trajectory_for_state(CarState proposed_state, map<int, vector<prediction>> predictions, int horizon) {
     // remember current state
-    auto initial_snapshot = ego_car.get_snapshot();
+    auto initial_snapshot = get_snapshot();
 
     // pretend to be in new proposed state
-    ego_car.state = state;
+    state = proposed_state;
     vector<snapshot> trajectory = { initial_snapshot };
     for (int i = 0; i < horizon; ++i) {
-      ego_car.restore_state_from_snapshot(initial_snapshot);
-      ego_car.state = state;
+      restore_state_from_snapshot(initial_snapshot);
+      state = proposed_state;
       realize_state(predictions);
       ego_car.increment(FSM::PREDICTION_INTERVAL);
-      trajectory.push_back(ego_car.get_snapshot());
+      trajectory.push_back(get_snapshot());
 
       // need to remove first prediction for each vehicle.
       for (auto pair : predictions) {
@@ -117,17 +122,12 @@ namespace pathplanner {
     }
 
     // restore state from snapshot
-    ego_car.restore_state_from_snapshot(initial_snapshot);
+    restore_state_from_snapshot(initial_snapshot);
     return trajectory;
   }
 
   void FSM::realize_state(map<int, vector<prediction>> predictions) {
-
-    /*
-    Given a state, realize it by adjusting acceleration and lane.
-    Note - lane changes happen instantaneously.
-    */
-    CarState state = this->ego_car.state;
+    //Given a state, realize it by adjusting velocity and lane.
     if (state == CarState::CS)
     {
       realize_constant_speed();
@@ -180,23 +180,23 @@ namespace pathplanner {
         too_close = true;
       }
     }
-    double velocity = ego_car.ref_vel;
+    double velocity = ref_vel;
     if (too_close) {
       if (danger) {
         velocity -= SPEED_INCREMENT;
       }
       else if (velocity > max_speed / 2) {
-        //double predicted_distance = (velocity - max_speed)*TIME_INTERVAL;
-        //if (predicted_distance < Vehicle::SAFE_DISTANCE) {
-        velocity -= SPEED_INCREMENT;
-        //}
+        double predicted_distance = (velocity - max_speed)*TIME_INTERVAL;
+        if (predicted_distance < Vehicle::SAFE_DISTANCE && velocity > 15.0) {
+          velocity -= SPEED_INCREMENT;
+        }
       }
     }
     else {
       if (velocity < max_speed - SPEED_INCREMENT) {
         velocity += SPEED_INCREMENT;
       }
-      else if (velocity > max_speed + SPEED_INCREMENT) {
+      else if (velocity > max_speed + SPEED_INCREMENT && velocity > 32.0) {
         velocity -= SPEED_INCREMENT;
       }
     }
@@ -204,11 +204,11 @@ namespace pathplanner {
     if (velocity < 0) {
       velocity = 0;
     }
-    ego_car.ref_vel = velocity;
+    ref_vel = velocity;
   }
 
   void FSM::realize_keep_lane(map<int, vector<prediction>> predictions) {
-    ego_car.proposed_lane = ego_car.lane;
+    proposed_lane = ego_car.lane;
     if (verbosity) {
       cout << "keep lane: " << ego_car.lane << " proposed lane: " << ego_car.lane << endl;
     }
@@ -222,11 +222,11 @@ namespace pathplanner {
       delta = 1;
     }
     ego_car.lane += delta;
-    ego_car.proposed_lane = ego_car.lane;
+    proposed_lane = ego_car.lane;
     if (verbosity) {
-      cout << "lane change: " << ego_car.lane << " proposed lane: " << ego_car.proposed_lane << endl;
+      cout << "lane change: " << ego_car.lane << " proposed lane: " << proposed_lane << endl;
     }
-    _update_ref_speed_for_lane(predictions, ego_car.proposed_lane);
+    _update_ref_speed_for_lane(predictions, proposed_lane);
   }
 
   void FSM::realize_prep_lane_change(map<int, vector<prediction>> predictions, string direction) {
@@ -235,16 +235,16 @@ namespace pathplanner {
     {
       delta = 1;
     }
-    ego_car.proposed_lane = ego_car.lane + delta;
+    proposed_lane = ego_car.lane + delta;
     if (verbosity) {
-      cout << "prep lane change: " << ego_car.lane << " proposed lane: " << ego_car.proposed_lane << endl;
+      cout << "prep lane change: " << ego_car.lane << " proposed lane: " << proposed_lane << endl;
     }
 
     vector<vector<prediction>> at_behind;
     for (auto pair : predictions) {
       int v_id = pair.first;
       vector<prediction> v = pair.second;
-      if (ego_car.is_in_front_of(v[0], ego_car.proposed_lane)) {
+      if (ego_car.is_in_front_of(v[0], proposed_lane)) {
         at_behind.push_back(v);
       }
     }
@@ -260,7 +260,7 @@ namespace pathplanner {
         }
       }
       double target_vel = (nearest_behind[1].s - nearest_behind[0].s) / PREDICTION_INTERVAL;
-      double velocity = ego_car.ref_vel;
+      double velocity = ref_vel;
       double delta_v = velocity - target_vel;
       double delta_s = ego_car.s - nearest_behind[0].s;
       //cout << "was vel: " << velocity;
@@ -281,12 +281,47 @@ namespace pathplanner {
         velocity = MAX_SPEED;
       }
       //cout << " became vel: " << velocity << endl;
-      ego_car.ref_vel = velocity;
+      ref_vel = velocity;
     }
   }
 
   double FSM::get_expected_velocity() {
-    return ego_car.ref_vel;
+    return ref_vel;
+  }
+
+  void FSM::restore_state_from_snapshot(snapshot snapshot) {
+    this->ego_car.s = snapshot.s;
+    this->ego_car.d = snapshot.d;
+    this->ego_car.x = snapshot.x;
+    this->ego_car.y = snapshot.y;
+    this->ego_car.dx = snapshot.dx;
+    this->ego_car.dy = snapshot.dy;
+    this->ego_car.ddx = snapshot.ddx;
+    this->ego_car.ddy = snapshot.ddy;
+    this->ego_car.yaw = snapshot.yaw;
+    this->ego_car.lane = snapshot.lane;
+    this->state = snapshot.state;
+    this->ref_vel = snapshot.ref_vel;
+    this->proposed_lane = snapshot.proposed_lane;
+  }
+
+  snapshot FSM::get_snapshot() {
+    snapshot snapshot_temp;
+    snapshot_temp.x = this->ego_car.x;
+    snapshot_temp.y = this->ego_car.y;
+    snapshot_temp.dx = this->ego_car.dx;
+    snapshot_temp.dy = this->ego_car.dy;
+    snapshot_temp.s = this->ego_car.s;
+    snapshot_temp.d = this->ego_car.d;
+    snapshot_temp.ddx = this->ego_car.ddx;
+    snapshot_temp.ddy = this->ego_car.ddy;
+    snapshot_temp.yaw = this->ego_car.yaw;
+    snapshot_temp.lane = this->ego_car.lane;
+    snapshot_temp.state = this->state;
+    snapshot_temp.ref_vel = this->ref_vel;
+    snapshot_temp.proposed_lane = this->proposed_lane;
+
+    return snapshot_temp;
   }
 
 }

@@ -55,19 +55,6 @@ namespace pathplanner {
     cout << " line: " << this->lane << endl;
   }
 
-  /*void Vehicle::reset(double x, double y, double vx, double vy, double s, double d) {
-    double new_angle = atan2(vy, vx);
-    this->yaw = (abs(new_angle) < 0.1) ? 0 : new_angle;
-    this->x = x;
-    this->y = y;
-    this->ddx = 0;
-    this->ddy = 0;
-    this->dx = vx;
-    this->dy = vy;
-    this->s = s;
-    this->d = d;
-  }*/
-
   void Vehicle::update_params(double x, double y, double yaw, double s, double d, double speed, double diff) {
     this->x = x;
     this->y = y;
@@ -105,8 +92,6 @@ namespace pathplanner {
   }
 
   void Vehicle::increment(double t /*=PREDICTION_INTERVAL*/) {
-
-    //double t = TIME_INTERVAL*dt;
     if (abs(this->ddy) < 0.001) {
       this->y += this->dy * t;
     }
@@ -164,7 +149,7 @@ namespace pathplanner {
   }
 
   bool Vehicle::is_close_to(prediction pred, int lane) {
-    return pred.is_in_lane(lane) && pred.s > s && (pred.s - s < SAFE_DISTANCE);
+    return pred.is_in_lane(lane) && pred.s > s && (pred.s - s < 2*SAFE_DISTANCE);
   }
 
   vector<prediction> Vehicle::generate_predictions(int horizon) {
@@ -178,39 +163,5 @@ namespace pathplanner {
     return predictions;
   }
 
-  void Vehicle::restore_state_from_snapshot(snapshot snapshot) {
-    //s = snapshot
-    this->s = snapshot.s;
-    this->d = snapshot.d;
-    this->x = snapshot.x;
-    this->y = snapshot.y;
-    this->dx = snapshot.dx;
-    this->dy = snapshot.dy;
-    this->ddx = snapshot.ddx;
-    this->ddy = snapshot.ddy;
-    this->yaw = snapshot.yaw;
-    this->state = snapshot.state;
-    this->lane = snapshot.lane;
-    this->ref_vel = snapshot.ref_vel;
-    this->proposed_lane = snapshot.proposed_lane;
-  }
-
-  snapshot Vehicle::get_snapshot() {
-    snapshot snapshot_temp;
-    snapshot_temp.x = this->x;
-    snapshot_temp.y = this->y;
-    snapshot_temp.dx = this->dx;
-    snapshot_temp.dy = this->dy;
-    snapshot_temp.s = this->s;
-    snapshot_temp.d = this->d;
-    snapshot_temp.ddx = this->ddx;
-    snapshot_temp.ddy = this->ddy;
-    snapshot_temp.yaw = this->yaw;
-    snapshot_temp.state = this->state;
-    snapshot_temp.lane = this->lane;
-    snapshot_temp.ref_vel = this->ref_vel;
-    snapshot_temp.proposed_lane = this->proposed_lane;
-
-    return snapshot_temp;
-  }
+  
 }
