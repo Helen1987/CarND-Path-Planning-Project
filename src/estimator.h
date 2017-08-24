@@ -58,18 +58,13 @@ namespace pathplanner {
       int const COMFORT = pow(10, 4);
       int const EFFICIENCY = pow(10, 3);
       double const MAX_SPEED = 49.5;
-
       double const DESIRED_BUFFER = 40;
-      int const PLANNING_HORIZON = 1;
+
+      int const PLANNING_HORIZON = 2;
 
       double const PREDICTION_INTERVAL = 0.5;
-      double const INTERVAL = .02;
-      double const LANE_WIDTH = 4.0;
-      double const MIDDLE_LANE = LANE_WIDTH / 2;
       double const MANOEUVRE = 4;
       double const MAX_DISTANCE = 999999;
-
-      double car_s;
 
       double change_lane_cost(vector<snapshot> trajectory,
         map<int, vector<prediction>> predictions, TrajectoryData data) const;

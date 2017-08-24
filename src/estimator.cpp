@@ -168,23 +168,23 @@ namespace pathplanner {
       cout << " s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v 
         << "obsticle: " << s_now.s << endl;
     }
-    if (snap.s- 2*MANOEUVRE <= s_now.s && s_now.s <= car_s + MANOEUVRE) {
+    if (snap.s- MANOEUVRE <= s_now.s && s_now.s <= car_s + MANOEUVRE) {
       return true;
     }
-    /*if (snap.s > s_now.s) {
-      //if (snap.s - s_now.s > MANOEUVRE && v > collide_car_v && snap.get_speed() > collide_car_v) {
-        double predicted_distance = snap.s - s_now.s + PREDICTION_INTERVAL*(snap.get_speed() - collide_car_v);
-        if (predicted_distance < MANOEUVRE) {
+    if (snap.s > s_now.s) {
+      if (snap.s - s_now.s > MANOEUVRE && v > collide_car_v) {
+        double predicted_distance = snap.s - s_now.s + PREDICTION_INTERVAL*(v - collide_car_v);
+        if (predicted_distance < 2*MANOEUVRE) {
           return true;
         }
-      //}
+      }
     }
     else {
-      double predicted_distance = s_now.s - snap.s + PREDICTION_INTERVAL*(collide_car_v - snap.get_speed());
+      double predicted_distance = s_now.s - snap.s + PREDICTION_INTERVAL*(collide_car_v - v);
       if (predicted_distance < MANOEUVRE) {
         return true;
       }
-    }*/
+    }
 
     return false;
   }
