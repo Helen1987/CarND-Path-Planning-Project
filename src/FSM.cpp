@@ -185,7 +185,7 @@ namespace pathplanner {
       if (danger) {
         velocity -= SPEED_INCREMENT;
       }
-      else if (velocity > 2*max_speed / 3) {
+      else if (velocity > max_speed / 2) {
         //double predicted_distance = (velocity - max_speed)*TIME_INTERVAL;
         //if (predicted_distance < Vehicle::SAFE_DISTANCE) {
         velocity -= SPEED_INCREMENT;

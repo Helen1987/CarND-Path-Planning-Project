@@ -160,7 +160,7 @@ namespace pathplanner {
   }
 
   bool Vehicle::is_behind_of(prediction pred, int lane) {
-    return pred.is_in_lane(lane) && (pred.s > s && (pred.s - s) < 3*SAFE_DISTANCE);
+    return pred.is_in_lane(lane) && (pred.s > s && (pred.s - s) < 4*SAFE_DISTANCE);
   }
 
   bool Vehicle::is_close_to(prediction pred, int lane) {

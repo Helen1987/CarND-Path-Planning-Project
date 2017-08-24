@@ -27,7 +27,7 @@ namespace pathplanner {
 
     void update_vehicle_state(json sensor_fusion);
     void update_ego_car_state(double car_s, double x, double y, double yaw, double s, double d, double speed);
-    void generate_trajectory(vector<double> previous_path_x, vector<double> previous_path_y);
+    void generate_trajectory(vector<double> previous_path_x, vector<double> previous_path_y, double car_s, double original_x, double original_y, double original_yaw);
     vector<double> get_x_values();
     vector<double> get_y_values();
 
@@ -41,7 +41,6 @@ namespace pathplanner {
     Trajectory trajectory = Trajectory();
 
     double get_time_step();
-    void estimate_car_state();
   };
 }
 

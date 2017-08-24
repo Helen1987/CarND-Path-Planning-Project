@@ -35,6 +35,7 @@ namespace pathplanner {
   void PathPlanner::update_vehicle_state(json sensor_fusion){
     double diff = get_time_step();
 
+    predictions.clear();
     for (auto data : sensor_fusion) {
       // [id, x, y, dx, dy, s, d]
       Vehicle* vehicle = NULL;
@@ -70,14 +71,12 @@ namespace pathplanner {
     fsm.ego_car.update_params(x, y, yaw, s, d, speed, diff);
   }
 
-  void PathPlanner::estimate_car_state() {
+  void PathPlanner::generate_trajectory(vector<double> previous_path_x, vector<double> previous_path_y,
+    double car_s, double original_x, double original_y, double original_yaw) {
     fsm.update_state(predictions);
     fsm.realize_state(predictions);
-  }
-
-  void PathPlanner::generate_trajectory(vector<double> previous_path_x, vector<double> previous_path_y) {
-    estimate_car_state();
-    trajectory.generate_trajectory(fsm.car_s, ego_car.x, ego_car.y, ego_car.yaw, ego_car.lane, fsm.get_expected_velocity());
+    trajectory.set_previous_path(previous_path_x, previous_path_y);
+    trajectory.generate_trajectory(car_s, original_x, original_y, original_yaw, ego_car.lane, fsm.get_expected_velocity());
   }
 
   vector<double> PathPlanner::get_x_values() {
