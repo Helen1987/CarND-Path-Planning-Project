@@ -20,8 +20,8 @@ namespace helpers {
   class Map
   {
   public:
-    Map();
-    ~Map();
+
+    static double MAX_S;
 
     static void add_waypoints(double x, double y, double s, double d_x, double d_y);
 

@@ -10,6 +10,7 @@ namespace pathplanner {
 
   class Vehicle;
   struct snapshot;
+  struct prediction;
 
   enum class CarState { CS = 0, KL = 1, PLCL = 2, PLCR = 3, LCL = 4, LCR = 5 };
 
@@ -19,25 +20,6 @@ namespace pathplanner {
   {
     return static_cast<typename std::underlying_type<Enumeration>::type>(value);
   }
-
-  struct prediction {
-    double s;
-    double d;
-    double vx;
-    double vy;
-
-    bool is_in_lane(int lane) {
-      return d < (4.0 * (lane + 1)) && d >(4.0 * lane);
-    }
-
-    double get_velocity() {
-      return sqrt(vx*vx + vy*vy);
-    }
-
-    void display() {
-      cout << "s: " << s << " d: " << d << " vx: " << vx << " vy: " << vy << endl;
-    }
-  };
 
   class FSM {
 
@@ -62,6 +44,9 @@ namespace pathplanner {
 
 
     int const lanes_available = 3;
+
+    //double ref_vel = 0;
+    //CarState expected_state = CarState::CS;
 
     void realize_constant_speed();
 

@@ -10,13 +10,7 @@ namespace helpers {
   vector<double> Map::map_waypoints_dx = vector<double>();
   vector<double> Map::map_waypoints_dy = vector<double>();
 
-  Map::Map()
-  {
-  }
-
-  Map::~Map()
-  {
-  }
+  double Map::MAX_S = 6945.554;
 
   void Map::add_waypoints(double x, double y, double s, double d_x, double d_y) {
     map_waypoints_x.push_back(x);
