@@ -50,7 +50,7 @@ namespace pathplanner {
     int proposed_lane;
     CarState state = CarState::CS;
 
-    Estimator estimator = Estimator(false);
+    Estimator estimator = Estimator(MAX_SPEED, true);
 
     void realize_constant_speed();
 

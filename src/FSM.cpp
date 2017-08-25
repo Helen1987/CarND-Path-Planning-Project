@@ -257,13 +257,13 @@ namespace pathplanner {
           nearest_behind = pred;
         }
       }
-      double target_vel = (nearest_behind[1].s - nearest_behind[0].s) / PREDICTION_INTERVAL;
+      //double target_vel = (nearest_behind[1].s - nearest_behind[0].s) / PREDICTION_INTERVAL;
       double velocity = ref_vel;
-      double delta_v = velocity - target_vel;
-      double delta_s = ego_car.s - nearest_behind[0].s;
+      //double delta_v = velocity - target_vel;
+      //double delta_s = ego_car.s - nearest_behind[0].s;
       //cout << "was vel: " << velocity;
-      if (delta_s < Vehicle::SAFE_DISTANCE / 2 && delta_v < -0.01)
-      {
+      //if (delta_s < Vehicle::SAFE_DISTANCE / 2 && delta_v < -0.01)
+      //{
         //if (abs(delta_v) < SPEED_INCREMENT) {
         velocity += SPEED_INCREMENT;
         //}
@@ -271,10 +271,10 @@ namespace pathplanner {
         //  velocity += 2 * SPEED_INCREMENT;
         //}
         //cout << " realize_prep_lane_change " << ref_vel << endl;
-      }
-      else {
-        velocity += SPEED_INCREMENT;
-      }
+      //}
+      //else {
+      //  velocity += SPEED_INCREMENT;
+      //}
       if (velocity > MAX_SPEED) {
         velocity = MAX_SPEED;
       }

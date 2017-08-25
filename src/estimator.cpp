@@ -9,7 +9,8 @@
 namespace pathplanner {
   using namespace std;
 
-  Estimator::Estimator(bool verbose) {
+  Estimator::Estimator(double max_speed, bool verbose) {
+    MAX_SPEED = max_speed;
     this->verbose = verbose;
   }
 
@@ -67,8 +68,8 @@ namespace pathplanner {
     if (verbose) {
       cout << "actual closest " << closest << endl;
     }
-    if (closest < 25) {
-      return 3 * DANGER;
+    if (closest < Vehicle::SAFE_DISTANCE) {
+      return DANGER;
     }
 
     if (closest > DESIRED_BUFFER) {
@@ -166,17 +167,21 @@ namespace pathplanner {
     double v = snap.get_speed();
 
     double collide_car_v = s_now.get_velocity();
-    if (verbose) {
-      cout << " s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v 
-        << "obsticle: " << s_now.s << endl;
-    }
     if (snap.s- MANOEUVRE <= s_now.s && s_now.s <= car_s + MANOEUVRE) {
+      if (verbose) {
+        cout << "1 clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
+          << "obsticle: " << s_now.s << endl;
+      }
       return true;
     }
     if (snap.s > s_now.s) {
       if (snap.s - s_now.s > MANOEUVRE && v > collide_car_v) {
         double predicted_distance = snap.s - s_now.s + PREDICTION_INTERVAL*(v - collide_car_v);
         if (predicted_distance < 2*MANOEUVRE) {
+          if (verbose) {
+            cout << "2nd clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
+              << "obsticle: " << s_now.s << endl;
+          }
           return true;
         }
       }
@@ -184,6 +189,10 @@ namespace pathplanner {
     else {
       double predicted_distance = s_now.s - snap.s + PREDICTION_INTERVAL*(collide_car_v - v);
       if (predicted_distance < MANOEUVRE) {
+        if (verbose) {
+          cout << "3rd clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
+            << "obsticle: " << s_now.s << endl;
+        }
         return true;
       }
     }

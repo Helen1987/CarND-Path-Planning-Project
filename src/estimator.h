@@ -44,7 +44,7 @@ namespace pathplanner {
   class Estimator
   {
     public:
-      Estimator(bool verbose);
+      Estimator(double max_speed, bool verbose);
 
       virtual ~Estimator();
 
@@ -81,11 +81,12 @@ namespace pathplanner {
 
       // priority levels for costs
       int const COLLISION = pow(10, 6);
-      int const DANGER = pow(10, 5);
+      int const DANGER = 3*pow(10, 5);
       int const COMFORT = pow(10, 4);
       int const EFFICIENCY = pow(10, 3);
-      double const MAX_SPEED = 49.5;
-      double const DESIRED_BUFFER = 40;
+
+      double MAX_SPEED;
+      double const DESIRED_BUFFER = Vehicle::SAFE_DISTANCE*2;
 
       int const PLANNING_HORIZON = 2;
 
