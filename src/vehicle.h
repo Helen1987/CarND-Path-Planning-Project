@@ -8,10 +8,28 @@
 #include <map>
 #include <string>
 #include <iterator>
-#include "prediction.h"
 
 namespace pathplanner {
   using namespace std;
+
+  struct prediction {
+    double s;
+    double d;
+    double vx;
+    double vy;
+
+    bool is_in_lane(int lane) {
+      return d < (4.0 * (lane + 1)) && d >(4.0 * lane);
+    }
+
+    double get_velocity() {
+      return sqrt(vx*vx + vy*vy);
+    }
+
+    void display() {
+      cout << "s: " << s << " d: " << d << " vx: " << vx << " vy: " << vy << endl;
+    }
+  };
 
   class Vehicle {
 
@@ -37,13 +55,9 @@ namespace pathplanner {
     double d;
     int lane = 1;
 
-    double get_velocity() {
-      return sqrt(dx*dx + dy*dy);
-    }
+    double get_velocity();
 
-    bool shouldPredict() {
-      return updates > 3;
-    }
+    bool shouldPredict();
 
     Vehicle(int id);
 

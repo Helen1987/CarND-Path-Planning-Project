@@ -39,6 +39,14 @@ namespace pathplanner {
 
   Vehicle::~Vehicle() {}
 
+  double Vehicle::get_velocity() {
+    return sqrt(dx*dx + dy*dy);
+  }
+
+  bool Vehicle::shouldPredict() {
+    return updates > 3;
+  }
+
   void Vehicle::display() {
     cout << "vehicle " << this->id << " info" << endl;
     cout << "s:    " << this->s;
@@ -77,7 +85,6 @@ namespace pathplanner {
   }
 
   void Vehicle::update_yaw(double x, double y, double vx, double vy, double s, double d, double diff) {
-    /*this->yaw = atan2(y - this->y, x - this->x);*/
     double new_angle = atan2(vy, vx);
     this->yaw = (abs(new_angle) < 0.1) ? 0 : new_angle;
     this->x = x;
@@ -86,10 +93,9 @@ namespace pathplanner {
     this->s = s;
     this->d = d;
     ++updates;
-    //display();
   }
 
-  void Vehicle::increment(double t /*=PREDICTION_INTERVAL*/) {
+  void Vehicle::increment(double t) {
     if (abs(this->ddy) < 0.001) {
       this->y += this->dy * t;
     }
@@ -153,7 +159,6 @@ namespace pathplanner {
   vector<prediction> Vehicle::generate_predictions(int horizon) {
 
     vector<prediction> predictions;
-    //cout << "in 30m: " << interval << " intervals" << endl;
     for (int i = 0; i < horizon; i++)
     {
       predictions.push_back(state_at(i*FSM::PREDICTION_INTERVAL));

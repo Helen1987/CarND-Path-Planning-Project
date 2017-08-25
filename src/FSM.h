@@ -4,11 +4,8 @@
 #include <iostream>
 #include <vector>
 #include <map>
-#include "snapshot.h"
-#include "prediction.h"
 #include "estimator.h"
 #include "vehicle.h"
-
 
 namespace pathplanner {
   using namespace std;
