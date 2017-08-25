@@ -20,7 +20,7 @@ namespace pathplanner {
     map<int, vector<prediction>> predictions, TrajectoryData data) const {
 
     if (data.proposed_lane != data.current_lane)
-      return COMFORT;
+      return 1.2*COMFORT;
 
     return 0;
   }
@@ -55,11 +55,11 @@ namespace pathplanner {
     if (verbose) {
       cout << "prop closest " << closest << endl;
     }
-    if (closest > 85) {
-      return 0.0;
+    if (closest > OBSERVED_DISTANCE) {
+      return 0.5*EFFICIENCY;
     }
-    double multiplier = (MAX_DISTANCE - closest) / MAX_DISTANCE;
-    return 13 * multiplier * EFFICIENCY;
+    double multiplier = (OBSERVED_DISTANCE - closest) / OBSERVED_DISTANCE;
+    return 1.5*multiplier * COMFORT;
   }
 
   double Estimator::buffer_cost(vector<snapshot> trajectory,
@@ -68,7 +68,7 @@ namespace pathplanner {
     if (verbose) {
       cout << "actual closest " << closest << endl;
     }
-    if (closest < Vehicle::SAFE_DISTANCE) {
+    if (closest < 1.5*Vehicle::SAFE_DISTANCE) {
       return DANGER;
     }
 
@@ -175,16 +175,16 @@ namespace pathplanner {
       return true;
     }
     if (snap.s > s_now.s) {
-      if (snap.s - s_now.s > MANOEUVRE && v > collide_car_v) {
+      //if (snap.s - s_now.s > MANOEUVRE && v > collide_car_v) {
         double predicted_distance = snap.s - s_now.s + PREDICTION_INTERVAL*(v - collide_car_v);
-        if (predicted_distance < 2*MANOEUVRE) {
+        if (predicted_distance < MANOEUVRE) {
           if (verbose) {
             cout << "2nd clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
               << "obsticle: " << s_now.s << endl;
           }
           return true;
         }
-      }
+      //}
     }
     else {
       double predicted_distance = s_now.s - snap.s + PREDICTION_INTERVAL*(collide_car_v - v);

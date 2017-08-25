@@ -92,6 +92,7 @@ namespace pathplanner {
 
       double const PREDICTION_INTERVAL = 0.5;
       double const MANOEUVRE = 4;
+      double const OBSERVED_DISTANCE = 85;
       double const MAX_DISTANCE = 999999;
 
       double change_lane_cost(vector<snapshot> trajectory,

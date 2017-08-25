@@ -92,9 +92,10 @@ namespace pathplanner {
       return est1.cost < est2.cost;
     });
 
-    if (verbosity) {
-      cout << "best estimate: " << (*best).cost << " in state " << as_integer((*best).state) << endl;
-    }
+    //if (verbosity) {
+      cout << "best estimate: " << (*best).cost << " in state " << as_integer((*best).state) 
+        << " in lane: " << ego_car.lane << endl;
+    //}
     return (*best).state;
   }
 
