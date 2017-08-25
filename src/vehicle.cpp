@@ -31,12 +31,10 @@ namespace pathplanner {
     this->ddy = 0;
     double angle = atan2(dy, dx);
     this->yaw = (abs(angle) < 0.1) ? 0 : angle;
-    max_acceleration = 10;
   }
 
   Vehicle::Vehicle(int id) {
     this->id = id;
-    max_acceleration = 10;
   }
 
   Vehicle::~Vehicle() {}

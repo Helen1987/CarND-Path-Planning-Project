@@ -4,22 +4,18 @@
 #include <math.h>
 #include <functional>
 #include "vehicle.h"
-#include "FSM.h"
+#include "snapshot.h"
+#include "prediction.h"
 
 namespace pathplanner {
   using namespace std;
-
-  struct estimate {
-    CarState state;
-    double cost;
-  };
 
   class Estimator
   {
     public:
       Estimator(bool verbose);
 
-      virtual ~Estimator() {}
+      virtual ~Estimator();
 
       double calculate_cost(double car_s, vector<snapshot> trajectory,
         map<int, vector<prediction>>predictions, CarState state);

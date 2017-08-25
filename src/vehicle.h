@@ -8,43 +8,16 @@
 #include <map>
 #include <string>
 #include <iterator>
-
-#include "FSM.h"
+#include "prediction.h"
 
 namespace pathplanner {
   using namespace std;
 
-  struct prediction {
-    double s;
-    double d;
-    double vx;
-    double vy;
-
-    bool is_in_lane(int lane) {
-      return d < (4.0 * (lane + 1)) && d >(4.0 * lane);
-    }
-
-    double get_velocity() {
-      return sqrt(vx*vx + vy*vy);
-    }
-
-    void display() {
-      cout << "s: " << s << " d: " << d << " vx: " << vx << " vy: " << vy << endl;
-    }
-  };
-
   class Vehicle {
 
   private:
-    
     double const LANE_WIDTH = 4.0;
     double const MIDDLE_LANE = LANE_WIDTH/2;
-    
-    //double const TOO_SHORT_DISTANCE = 15.0;
-    //double const MANOEUVRE = 10;
-    double const MANOEUVRE = 4;
-    //double const PREDICTION_DISTANCE = 20;
-
     int updates = 0;
 
     void update_accel(double vx, double vy, double diff);
@@ -62,35 +35,20 @@ namespace pathplanner {
     double yaw;
     double s;
     double d;
+    int lane = 1;
 
     double get_velocity() {
       return sqrt(dx*dx + dy*dy);
     }
 
-    int lane = 1;
-
-    struct collider {
-      bool collision; // is there a collision?
-      int time; // time collision happens
-    };
-
     bool shouldPredict() {
       return updates > 3;
     }
-
-    int preferred_buffer = 6; // impacts "keep lane" behavior.
-
-    int max_acceleration;
-
-    
 
     Vehicle(int id);
 
     Vehicle(int id, double x, double y, double dx, double dy, double s, double d);
 
-    /**
-    * Destructor
-    */
     virtual ~Vehicle();
 
     void update_params(double x, double y, double yaw, double s, double d, double speed, double diff);
@@ -110,10 +68,6 @@ namespace pathplanner {
     bool is_close_to(prediction pred, int lane);
 
     vector<prediction> generate_predictions(int horizon = 10);
-
-    snapshot get_snapshot();
-
-    void restore_state_from_snapshot(snapshot snapshot);
   };
 
 }

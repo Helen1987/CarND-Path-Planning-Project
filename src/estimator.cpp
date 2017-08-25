@@ -13,6 +13,8 @@ namespace pathplanner {
     this->verbose = verbose;
   }
 
+  Estimator::~Estimator() {}
+
   double Estimator::change_lane_cost(vector<snapshot> trajectory,
     map<int, vector<prediction>> predictions, TrajectoryData data) const {
 

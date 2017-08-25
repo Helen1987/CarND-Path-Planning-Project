@@ -1,7 +1,6 @@
 #include <algorithm>
 
 #include "FSM.h"
-#include "estimator.h"
 #include "vehicle.h"
 
 
@@ -81,7 +80,6 @@ namespace pathplanner {
       return states[0];
     }
     auto costs = vector<estimate>();
-    Estimator estimator = Estimator(false);
     for (auto state : states) {
       estimate estimate;
       estimate.state = state;
