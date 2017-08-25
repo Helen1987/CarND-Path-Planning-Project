@@ -79,6 +79,7 @@ namespace pathplanner {
     this->ddy = (vy - this->dy) / diff;
     if (this->ddy < 0.01) {
       this->ddy = 0;
+
     }
     this->dx = vx;
     this->dy = vy;

@@ -113,7 +113,7 @@ int main() {
           planner.update_vehicle_state(sensor_fusion);
           planner.update_ego_car_state(car_s, original_x, original_y, original_yaw, original_s, original_d, original_speed);
 
-          planner.generate_trajectory(previous_path_x, previous_path_y, car_s, original_x, original_y, original_yaw);
+          planner.generate_trajectory(previous_path_x, previous_path_y, original_yaw);
 
           msgJson["next_x"] = planner.get_x_values();
           msgJson["next_y"] = planner.get_y_values();
