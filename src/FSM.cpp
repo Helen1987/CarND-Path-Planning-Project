@@ -14,7 +14,6 @@ namespace pathplanner {
 
   double FSM::PREDICTION_INTERVAL = 0.5;
 
-  // TODO - Implement this method.
   void FSM::update_state(map<int, vector<prediction>> predictions) {
     /*
     Updates the "state" of the vehicle by assigning one of the
@@ -92,10 +91,10 @@ namespace pathplanner {
       return est1.cost < est2.cost;
     });
 
-    //if (verbosity) {
+    if (verbosity) {
       cout << "best estimate: " << (*best).cost << " in state " << as_integer((*best).state) 
         << " in lane: " << ego_car.lane << endl;
-    //}
+    }
     return (*best).state;
   }
 
@@ -258,28 +257,11 @@ namespace pathplanner {
           nearest_behind = pred;
         }
       }
-      //double target_vel = (nearest_behind[1].s - nearest_behind[0].s) / PREDICTION_INTERVAL;
       double velocity = ref_vel;
-      //double delta_v = velocity - target_vel;
-      //double delta_s = ego_car.s - nearest_behind[0].s;
-      //cout << "was vel: " << velocity;
-      //if (delta_s < Vehicle::SAFE_DISTANCE / 2 && delta_v < -0.01)
-      //{
-        //if (abs(delta_v) < SPEED_INCREMENT) {
-        velocity += SPEED_INCREMENT;
-        //}
-        //else {
-        //  velocity += 2 * SPEED_INCREMENT;
-        //}
-        //cout << " realize_prep_lane_change " << ref_vel << endl;
-      //}
-      //else {
-      //  velocity += SPEED_INCREMENT;
-      //}
+      velocity += SPEED_INCREMENT;
       if (velocity > MAX_SPEED) {
         velocity = MAX_SPEED;
       }
-      //cout << " became vel: " << velocity << endl;
       ref_vel = velocity;
     }
   }
