@@ -66,11 +66,12 @@ namespace pathplanner {
   }
 
   void PathPlanner::update_ego_car_state(double car_s, double x, double y, double yaw, double s, double d, double speed) {
+    original_yaw = yaw;
     fsm.car_s = car_s;
     fsm.ego_car.update_params(x, y, yaw, s, d, speed, diff);
   }
 
-  void PathPlanner::generate_trajectory(vector<double> previous_path_x, vector<double> previous_path_y, double original_yaw) {
+  void PathPlanner::generate_trajectory(vector<double> previous_path_x, vector<double> previous_path_y) {
     fsm.update_state(predictions);
     fsm.realize_state(predictions);
     trajectory.set_previous_path(previous_path_x, previous_path_y);

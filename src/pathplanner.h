@@ -27,11 +27,12 @@ namespace pathplanner {
 
     void update_vehicle_state(json sensor_fusion);
     void update_ego_car_state(double car_s, double x, double y, double yaw, double s, double d, double speed);
-    void generate_trajectory(vector<double> previous_path_x, vector<double> previous_path_y, double original_yaw);
+    void generate_trajectory(vector<double> previous_path_x, vector<double> previous_path_y);
     vector<double> get_x_values();
     vector<double> get_y_values();
 
   private:
+    double original_yaw;
     double diff;
     milliseconds ms;
     map<int, Vehicle*> vehicles;
