@@ -40,7 +40,7 @@ namespace pathplanner {
 
   private:
     double const SPEED_INCREMENT = .224;
-    double const MAX_SPEED = 49.98;
+    double const MAX_SPEED = 49.96;
     double const TIME_INTERVAL = 0.02;
     double const PREDICTIONS_COUNT = 5;
 
