@@ -19,8 +19,12 @@ namespace pathplanner {
   double Estimator::change_lane_cost(vector<snapshot> trajectory,
     map<int, vector<prediction>> predictions, TrajectoryData data) const {
 
-    if (data.proposed_lane != data.current_lane)
+    if (data.proposed_lane != data.current_lane) {
+      if (data.proposed_lane == 1) { // we prefer to stay in central lane
+        return 0;
+      }
       return COMFORT;
+    }
 
     return 0;
   }
@@ -178,7 +182,7 @@ namespace pathplanner {
     }
     if (snap.s > s_now.s) {
       double predicted_distance = snap.s - s_now.s + PREDICTION_INTERVAL*(v - collide_car_v);
-      if (predicted_distance < 2*MANOEUVRE) {
+      if (predicted_distance < 3*MANOEUVRE) {
         if (verbose) {
           cout << "2nd clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
             << "obsticle: " << s_now.s << endl;
