@@ -13,13 +13,14 @@ namespace pathplanner {
   using namespace std;
 
   struct prediction {
+    static double LANE_WIDTH;
     double s;
     double d;
     double vx;
     double vy;
 
     bool is_in_lane(int lane) {
-      return d < (4.0 * (lane + 1)) && d >(4.0 * lane);
+      return d < (LANE_WIDTH * (lane + 1)) && d >(LANE_WIDTH * lane);
     }
 
     double get_velocity() {
@@ -34,8 +35,6 @@ namespace pathplanner {
   class Vehicle {
 
   private:
-    double const LANE_WIDTH = 4.0;
-    double const MIDDLE_LANE = LANE_WIDTH/2;
     int updates = 0;
 
     void update_accel(double vx, double vy, double diff);

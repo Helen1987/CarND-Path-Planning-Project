@@ -91,7 +91,7 @@ namespace pathplanner {
       int const PLANNING_HORIZON = 2;
 
       double const PREDICTION_INTERVAL = 0.5;
-      double const MANOEUVRE = 4;
+      double const MANOEUVRE = 5;
       double const OBSERVED_DISTANCE = 65;
       double const MAX_DISTANCE = 999999;
 

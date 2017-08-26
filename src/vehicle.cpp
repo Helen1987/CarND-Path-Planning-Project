@@ -16,6 +16,7 @@
 namespace pathplanner {
   using namespace helpers;
 
+  double prediction::LANE_WIDTH = 4.0;
   double Vehicle::SAFE_DISTANCE = 10.0;
 
   Vehicle::Vehicle(int id, double x, double y, double dx, double dy, double s, double d) {

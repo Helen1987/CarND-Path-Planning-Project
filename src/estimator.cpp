@@ -169,7 +169,7 @@ namespace pathplanner {
     double v = snap.get_speed();
 
     double collide_car_v = s_now.get_velocity();
-    if (snap.s <= s_now.s && s_now.s <= car_s) {
+    if (snap.s <= s_now.s + MANOEUVRE && s_now.s <= car_s) {
       if (verbose) {
         cout << "1 clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
           << "obsticle: " << s_now.s << endl;
