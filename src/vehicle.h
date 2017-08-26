@@ -19,8 +19,7 @@ namespace pathplanner {
     double vy;
 
     bool is_in_lane(int lane) {
-      // bacause of poor coord transformation reduce lane definition on 0.5m
-      return d < (4.0 * (lane + 1)-0.5) && d >(4.0 * lane) + 0.5;
+      return d < (4.0 * (lane + 1)) && d >(4.0 * lane);
     }
 
     double get_velocity() {
