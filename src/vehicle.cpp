@@ -157,12 +157,12 @@ namespace pathplanner {
     return pred.is_in_lane(lane) && pred.s > s && (pred.s - s < 2*SAFE_DISTANCE);
   }
 
-  vector<prediction> Vehicle::generate_predictions(int horizon) {
+  vector<prediction> Vehicle::generate_predictions(double interval, int horizon) {
 
     vector<prediction> predictions;
     for (int i = 0; i < horizon; i++)
     {
-      predictions.push_back(state_at(i*FSM::PREDICTION_INTERVAL));
+      predictions.push_back(state_at(i*interval));
     }
     return predictions;
   }

@@ -49,7 +49,7 @@ namespace pathplanner {
           vehicle = vehicles[data[0]];
           (*vehicle).update_yaw(data[1], data[2], data[3], data[4], data[5], data[6], diff);
           if ((*vehicle).shouldPredict()) {
-            vector<prediction> car_preds = (*vehicle).generate_predictions();
+            vector<prediction> car_preds = (*vehicle).generate_predictions(fsm.PREDICTION_INTERVAL);
             predictions[(*vehicle).id] = car_preds;
           }
         }

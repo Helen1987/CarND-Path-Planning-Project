@@ -30,9 +30,10 @@ namespace pathplanner {
 
     Vehicle& ego_car;
     double car_s;
+    double const PREDICTION_INTERVAL = 0.05;
 
     bool verbosity = false;
-    static double PREDICTION_INTERVAL;
+    
     double get_expected_velocity();
     void update_state(map<int, vector<prediction>> predictions);
     void realize_state(map<int, vector<prediction> > predictions);
@@ -42,7 +43,6 @@ namespace pathplanner {
     double const MAX_SPEED = 49.5;
     double const TIME_INTERVAL = 0.02;
     double const PREDICTIONS_COUNT = 5;
-
 
     int const lanes_available = 3;
 

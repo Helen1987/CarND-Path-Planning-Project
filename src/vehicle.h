@@ -19,7 +19,8 @@ namespace pathplanner {
     double vy;
 
     bool is_in_lane(int lane) {
-      return d < (4.0 * (lane + 1)) && d >(4.0 * lane);
+      // bacause of poor coord transformation reduce lane definition on 0.5m
+      return d < (4.0 * (lane + 1)-0.5) && d >(4.0 * lane) + 0.5;
     }
 
     double get_velocity() {
@@ -81,7 +82,7 @@ namespace pathplanner {
 
     bool is_close_to(prediction pred, int lane);
 
-    vector<prediction> generate_predictions(int horizon = 10);
+    vector<prediction> generate_predictions(double interval, int horizon = 10);
   };
 
 }

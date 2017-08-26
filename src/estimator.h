@@ -86,13 +86,13 @@ namespace pathplanner {
       int const EFFICIENCY = pow(10, 3);
 
       double MAX_SPEED;
-      double const DESIRED_BUFFER = Vehicle::SAFE_DISTANCE*2;
+      double const DESIRED_BUFFER = Vehicle::SAFE_DISTANCE*4;
 
       int const PLANNING_HORIZON = 2;
 
       double const PREDICTION_INTERVAL = 0.5;
-      double const MANOEUVRE = 4;
-      double const OBSERVED_DISTANCE = 85;
+      double const MANOEUVRE = 5;
+      double const OBSERVED_DISTANCE = 65;
       double const MAX_DISTANCE = 999999;
 
       double change_lane_cost(vector<snapshot> trajectory,

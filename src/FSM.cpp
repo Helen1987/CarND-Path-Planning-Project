@@ -12,8 +12,6 @@ namespace pathplanner {
 
   FSM::~FSM() {};
 
-  double FSM::PREDICTION_INTERVAL = 0.5;
-
   void FSM::update_state(map<int, vector<prediction>> predictions) {
     /*
     Updates the "state" of the vehicle by assigning one of the
@@ -103,13 +101,13 @@ namespace pathplanner {
     auto initial_snapshot = get_snapshot();
 
     // pretend to be in new proposed state
-    state = proposed_state;
+    //state = proposed_state;
     vector<snapshot> trajectory = { initial_snapshot };
     for (int i = 0; i < horizon; ++i) {
       restore_state_from_snapshot(initial_snapshot);
       state = proposed_state;
       realize_state(predictions);
-      ego_car.increment(FSM::PREDICTION_INTERVAL);
+      ego_car.increment(PREDICTION_INTERVAL);
       trajectory.push_back(get_snapshot());
 
       // need to remove first prediction for each vehicle.

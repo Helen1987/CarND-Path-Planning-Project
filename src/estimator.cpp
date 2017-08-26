@@ -32,7 +32,7 @@ namespace pathplanner {
     double diff = target_speed - speed;
     double pct = diff / target_speed;
     double multiplier = pow(pct, 2);
-    return multiplier * EFFICIENCY;
+    return 5*multiplier * EFFICIENCY;
   }
 
   double Estimator::collision_cost(vector<snapshot> trajectory,
@@ -56,10 +56,11 @@ namespace pathplanner {
       cout << "prop closest " << closest << endl;
     }
     if (closest > OBSERVED_DISTANCE) {
-      return 0.5*EFFICIENCY;
+      double multiplier = (closest - OBSERVED_DISTANCE) / closest;
+      return 0.0;// EFFICIENCY*(1 - multiplier);
     }
     double multiplier = (OBSERVED_DISTANCE - closest) / OBSERVED_DISTANCE;
-    return 1.5*multiplier * COMFORT;
+    return 3*multiplier * COMFORT;
   }
 
   double Estimator::buffer_cost(vector<snapshot> trajectory,
@@ -69,7 +70,7 @@ namespace pathplanner {
       cout << "actual closest " << closest << endl;
     }
     if (closest < 2*Vehicle::SAFE_DISTANCE) {
-      return DANGER;
+      return 2*DANGER;
     }
 
     if (closest > DESIRED_BUFFER) {
@@ -77,7 +78,7 @@ namespace pathplanner {
     }
 
     double multiplier = 1.0 - pow((closest / DESIRED_BUFFER), 2);
-    return multiplier * DANGER;
+    return 3*multiplier * DANGER;
   }
 
   double Estimator::calculate_cost(double car_s, vector<snapshot> trajectory,
@@ -107,6 +108,7 @@ namespace pathplanner {
     snapshot last = t[t.size() - 1];
 
     double dt = trajectory.size()*PREDICTION_INTERVAL;
+    // for lane change we see actual line after current state only
     data.current_lane = first.lane;
     data.proposed_lane = last.proposed_lane;
     data.avg_speed = (last.get_speed()*dt - current_snapshot.get_speed()) / dt; // (v2*dt-v1*1)/dt
@@ -167,7 +169,7 @@ namespace pathplanner {
     double v = snap.get_speed();
 
     double collide_car_v = s_now.get_velocity();
-    if (snap.s- MANOEUVRE <= s_now.s && s_now.s <= car_s + MANOEUVRE) {
+    if (snap.s <= s_now.s && s_now.s <= car_s) {
       if (verbose) {
         cout << "1 clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
           << "obsticle: " << s_now.s << endl;
