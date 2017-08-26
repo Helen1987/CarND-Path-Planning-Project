@@ -37,7 +37,7 @@ int main() {
   uWS::Hub h;
 
   // Waypoint map to read from
-  string map_file_ = "../data/highway_map.csv";
+  string map_file_ = "../data/highway_map_bosch1.csv";
   // The max s value before wrapping around the track back to 0
 
   ifstream in_map_(map_file_.c_str(), ifstream::in);
