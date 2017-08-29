@@ -60,8 +60,8 @@ namespace pathplanner {
       cout << "prop closest " << closest << endl;
     }
     if (closest > OBSERVED_DISTANCE) {
-      double multiplier = (closest - OBSERVED_DISTANCE) / closest;
-      return 0.0;// EFFICIENCY*(1 - multiplier);
+      double multiplier = (MAX_DISTANCE - closest) / MAX_DISTANCE;
+      return EFFICIENCY*multiplier;
     }
     double multiplier = (OBSERVED_DISTANCE - closest) / OBSERVED_DISTANCE;
     return 3*multiplier * COMFORT;
@@ -74,7 +74,7 @@ namespace pathplanner {
       cout << "actual closest " << closest << endl;
     }
     if (closest < 2*Vehicle::SAFE_DISTANCE) {
-      return 2*DANGER;
+      return 3*DANGER;
     }
 
     if (closest > DESIRED_BUFFER) {
@@ -181,8 +181,8 @@ namespace pathplanner {
       return true;
     }
     if (snap.s > s_now.s) {
-      double predicted_distance = snap.s - s_now.s + PREDICTION_INTERVAL*(v - collide_car_v);
-      if (predicted_distance < 3*MANOEUVRE) {
+      double predicted_distance = snap.s - s_now.s + 3*PREDICTION_INTERVAL*(v - collide_car_v);
+      if (predicted_distance < MANOEUVRE) {
         if (verbose) {
           cout << "2nd clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
             << "obsticle: " << s_now.s << endl;
@@ -191,7 +191,7 @@ namespace pathplanner {
       }
     }
     else {
-      double predicted_distance = s_now.s - snap.s + PREDICTION_INTERVAL*(collide_car_v - v);
+      double predicted_distance = s_now.s - snap.s + 3*PREDICTION_INTERVAL*(collide_car_v - v);
       if (predicted_distance < MANOEUVRE) {
         if (verbose) {
           cout << "3rd clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
