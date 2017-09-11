@@ -2,8 +2,6 @@
 #include <uWS/uWS.h>
 #include <iostream>
 #include <thread>
-#include "Eigen-3.3/Eigen/Core"
-#include "Eigen-3.3/Eigen/QR"
 #include "json.hpp"
 
 #include "map.h"

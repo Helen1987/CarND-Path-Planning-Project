@@ -48,7 +48,7 @@ namespace pathplanner {
 
       virtual ~Estimator();
 
-      double calculate_cost(double car_s, vector<snapshot> trajectory,
+      double calculate_cost(double car_s, double ref_vel, vector<snapshot> trajectory,
         map<int, vector<prediction>>predictions, CarState state);
 
     private:
@@ -86,12 +86,12 @@ namespace pathplanner {
       int const EFFICIENCY = pow(10, 3);
 
       double MAX_SPEED;
-      double const DESIRED_BUFFER = Vehicle::SAFE_DISTANCE*4;
+      double const DESIRED_BUFFER = Vehicle::SAFE_DISTANCE*2;
 
-      int const PLANNING_HORIZON = 2;
+      int const PLANNING_HORIZON = 4;
 
       double const PREDICTION_INTERVAL = 0.5;
-      double const MANOEUVRE = 4;
+      double const MANOEUVRE = 4.0;
       double const OBSERVED_DISTANCE = 65;
       double const MAX_DISTANCE = 999999;
 
@@ -110,10 +110,10 @@ namespace pathplanner {
       double free_line_cost(vector<snapshot> trajectory,
         map<int, vector<prediction>> predictions, TrajectoryData data) const;
 
-      TrajectoryData get_helper_data(double car_s, vector<snapshot> trajectory,
+      TrajectoryData get_helper_data(double car_s, double ref_s, vector<snapshot> trajectory,
         map<int, vector<prediction>> predictions, CarState state);
 
-      bool check_collision(double car_s, snapshot snap, prediction s_now, CarState checkstate);
+      bool check_collision(double car_s, double ref_speed, snapshot snap, prediction s_now, CarState checkstate);
 
       map<int, vector<prediction>> filter_predictions_by_lane(
         map<int, vector<prediction>> predictions, int lane);

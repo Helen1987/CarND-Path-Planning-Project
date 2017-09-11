@@ -81,7 +81,7 @@ namespace pathplanner {
       estimate estimate;
       estimate.state = state;
       auto trajectory = trajectory_for_state(state, predictions, PREDICTIONS_COUNT);
-      estimate.cost = estimator.calculate_cost(car_s, trajectory, predictions, state);
+      estimate.cost = estimator.calculate_cost(car_s, ref_vel, trajectory, predictions, state);
       costs.push_back(estimate);
     }
     auto best = min_element(std::begin(costs), std::end(costs),
@@ -164,13 +164,13 @@ namespace pathplanner {
         max_speed = target_speed - SPEED_INCREMENT;
         keep_speed = true;
       }
-
       if (ego_car.is_close_to(pred, checked_lane)) {
+        
         if (verbosity) {
           cout << "pred d: " << pred.d << " my lane: " << checked_lane;
           cout << " pred s: " << pred.s << " my s: " << ego_car.s << endl;
         }
-        if (pred.s < car_s) {
+        if (pred.s < ego_car.s + 5) {
           danger = true;
         }
         too_close = true;
@@ -179,21 +179,42 @@ namespace pathplanner {
     double velocity = ref_vel;
     if (too_close) {
       if (danger) {
-        velocity -= SPEED_INCREMENT;
-      }
-      else if (velocity > max_speed / 2) {
-        double predicted_distance = (velocity - max_speed)*TIME_INTERVAL;
-        if (predicted_distance < Vehicle::SAFE_DISTANCE && velocity > 15.0) {
+        if (velocity > 44.0) {
+          velocity -= 3 * SPEED_INCREMENT;
+        }
+        else if (velocity > 30.0) {
+          velocity -= 2 * SPEED_INCREMENT;
+        }
+        else {
           velocity -= SPEED_INCREMENT;
+        }
+      }
+      else {
+        if (velocity < max_speed) {
+          velocity += SPEED_INCREMENT;
+        }
+        else if (velocity > max_speed) {
+          if (velocity > 44.0) {
+            velocity -= 3 * SPEED_INCREMENT;
+          }
+          else if (velocity > 30.0) {
+            velocity -= 2 * SPEED_INCREMENT;
+          }
+          else {
+            velocity -= SPEED_INCREMENT;
+          }
         }
       }
     }
     else {
-      if (velocity < max_speed - SPEED_INCREMENT) {
+      if (keep_speed && velocity > 25 && velocity > max_speed*2.7) {
+        velocity -= SPEED_INCREMENT;
+      }
+      else {
         velocity += SPEED_INCREMENT;
       }
-      else if (velocity > max_speed + SPEED_INCREMENT && velocity > 32.0) {
-        velocity -= SPEED_INCREMENT;
+      if (velocity > MAX_SPEED) {
+        velocity = MAX_SPEED;
       }
     }
 
@@ -227,6 +248,7 @@ namespace pathplanner {
 
   void FSM::realize_prep_lane_change(map<int, vector<prediction>> predictions, string direction) {
     int delta = -1;
+    bool close = false;
     if (direction.compare("R") == 0)
     {
       delta = 1;
@@ -243,6 +265,11 @@ namespace pathplanner {
       if (ego_car.is_in_front_of(v[0], proposed_lane)) {
         at_behind.push_back(v);
       }
+      if (ego_car.is_close_to(v[0], ego_car.lane)) {
+        if (v[0].s + v[0].get_velocity()*30*PREDICTION_INTERVAL < ego_car.s + ego_car.get_velocity()*30*PREDICTION_INTERVAL + 3) {
+          close = true;
+        }
+      }
     }
     if (at_behind.size() > 0)
     {
@@ -256,7 +283,17 @@ namespace pathplanner {
         }
       }
       double velocity = ref_vel;
-      velocity += SPEED_INCREMENT;
+      if (close) {
+        if (velocity > 30.0) {
+          velocity -= 2 * SPEED_INCREMENT;
+        }
+        else {
+          velocity -= SPEED_INCREMENT;
+        }
+      }
+      else {
+        velocity += SPEED_INCREMENT;
+      }
       if (velocity > MAX_SPEED) {
         velocity = MAX_SPEED;
       }
