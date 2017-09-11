@@ -36,7 +36,7 @@ namespace pathplanner {
     double diff = target_speed - speed;
     double pct = diff / target_speed;
     double multiplier = pow(pct, 2);
-    return 5*multiplier * EFFICIENCY;
+    return 8*multiplier * EFFICIENCY;
   }
 
   double Estimator::collision_cost(vector<snapshot> trajectory,
@@ -175,20 +175,10 @@ namespace pathplanner {
     double v = snap.get_speed();
 
     double collide_car_v = s_now.get_velocity();
-    /*if (snap.s <= s_now.s && s_now.s <= car_s - MANOEUVRE) {
-      if (verbose) {
-        cout << "1 clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
-          << "obsticle: " << s_now.s << endl;
-      }
-      return true;
-    }*/
     if (car_s > s_now.s) {
-      //double predicted_distance2v = snap.s - s_now.s + 4*PREDICTION_INTERVAL*(v - collide_car_v);
-      //double predicted_distance2ref = snap.s - s_now.s + 4*PREDICTION_INTERVAL*(ref_speed - collide_car_v);
-      double predicted_distance1v = snap.s - s_now.s +PREDICTION_INTERVAL*(v - collide_car_v);
-      double predicted_distance1ref = car_s - s_now.s + 2*PREDICTION_INTERVAL*(ref_speed - collide_car_v);
-      if (//predicted_distance2v < MANOEUVRE || predicted_distance2ref < MANOEUVRE ||
-        predicted_distance1v < MANOEUVRE || predicted_distance1ref < MANOEUVRE) {
+      double predicted_distance1v = snap.s - s_now.s + PREDICTION_INTERVAL*(v - collide_car_v);
+      double predicted_distance2v = snap.s - s_now.s + 4*PREDICTION_INTERVAL*(v - collide_car_v);
+      if (predicted_distance2v < MANOEUVRE || predicted_distance1v < MANOEUVRE) {
         if (verbose) {
           cout << "2nd clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
             << "obsticle: " << s_now.s << endl;
@@ -197,12 +187,8 @@ namespace pathplanner {
       }
     }
     else {
-      //double predicted_distance2v = s_now.s - snap.s + 4*PREDICTION_INTERVAL*(collide_car_v - v);
-      //double predicted_distance2ref = s_now.s - snap.s + 4 * PREDICTION_INTERVAL*(collide_car_v - ref_speed);
-      double predicted_distance1v = s_now.s - snap.s;// +3 * PREDICTION_INTERVAL*(collide_car_v - v);
-      //double predicted_distance1ref = s_now.s - car_s + PREDICTION_INTERVAL*(collide_car_v - ref_speed);
-      if (predicted_distance1v < MANOEUVRE) {// || predicted_distance1ref < 0) {
-        //|| predicted_distance2ref < MANOEUVRE || predicted_distance2v < MANOEUVRE) {
+      double predicted_distance1v = s_now.s - snap.s + PREDICTION_INTERVAL*(collide_car_v - v);
+      if (predicted_distance1v < 0) {
         if (verbose) {
           cout << "3rd clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
             << "obsticle: " << s_now.s << endl;

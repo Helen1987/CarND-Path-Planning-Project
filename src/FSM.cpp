@@ -170,7 +170,7 @@ namespace pathplanner {
           cout << "pred d: " << pred.d << " my lane: " << checked_lane;
           cout << " pred s: " << pred.s << " my s: " << ego_car.s << endl;
         }
-        if (pred.s < car_s) {
+        if (pred.s < ego_car.s + 5) {
           danger = true;
         }
         too_close = true;
@@ -179,7 +179,10 @@ namespace pathplanner {
     double velocity = ref_vel;
     if (too_close) {
       if (danger) {
-        if (velocity > 22.0) {
+        if (velocity > 43.0) {
+          velocity -= 3 * SPEED_INCREMENT;
+        }
+        else if (velocity > 30.0) {
           velocity -= 2 * SPEED_INCREMENT;
         }
         else {
@@ -191,7 +194,10 @@ namespace pathplanner {
           velocity += SPEED_INCREMENT;
         }
         else if (velocity > max_speed) {
-          if (velocity > 22.0) {
+          if (velocity > 43.0) {
+            velocity -= 3 * SPEED_INCREMENT;
+          }
+          else if (velocity > 30.0) {
             velocity -= 2 * SPEED_INCREMENT;
           }
           else {
@@ -201,7 +207,7 @@ namespace pathplanner {
       }
     }
     else {
-      if (keep_speed && velocity > 30 && velocity > max_speed + 60* SPEED_INCREMENT) {
+      if (keep_speed && velocity > 25 && velocity > max_speed*2.7) {
         velocity -= SPEED_INCREMENT;
       }
       else {
@@ -260,7 +266,7 @@ namespace pathplanner {
         at_behind.push_back(v);
       }
       if (ego_car.is_close_to(v[0], ego_car.lane)) {
-        if (v[0].s + v[0].get_velocity()*5*PREDICTION_INTERVAL < ego_car.s + ego_car.get_velocity()*5*PREDICTION_INTERVAL) {
+        if (v[0].s + v[0].get_velocity()*30*PREDICTION_INTERVAL < ego_car.s + ego_car.get_velocity()*30*PREDICTION_INTERVAL + 3) {
           close = true;
         }
       }
@@ -277,7 +283,15 @@ namespace pathplanner {
         }
       }
       double velocity = ref_vel;
-      if (!close) {
+      if (close) {
+        if (velocity > 30.0) {
+          velocity -= 2 * SPEED_INCREMENT;
+        }
+        else {
+          velocity -= SPEED_INCREMENT;
+        }
+      }
+      else {
         velocity += SPEED_INCREMENT;
       }
       if (velocity > MAX_SPEED) {
