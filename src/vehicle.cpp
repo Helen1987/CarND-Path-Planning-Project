@@ -17,7 +17,7 @@ namespace pathplanner {
   using namespace helpers;
 
   double prediction::LANE_WIDTH = 4.0;
-  double Vehicle::SAFE_DISTANCE = 10.0;
+  double Vehicle::SAFE_DISTANCE = 20.0;
 
   Vehicle::Vehicle(int id, double x, double y, double dx, double dy, double s, double d) {
 
@@ -151,11 +151,11 @@ namespace pathplanner {
   }
 
   bool Vehicle::is_behind_of(prediction pred, int lane) {
-    return pred.is_in_lane(lane) && (pred.s > s && (pred.s - s) < 4*SAFE_DISTANCE);
+    return pred.is_in_lane(lane) && (pred.s > s && (pred.s - s) < 2*SAFE_DISTANCE);
   }
 
   bool Vehicle::is_close_to(prediction pred, int lane) {
-    return pred.is_in_lane(lane) && pred.s > s && (pred.s - s < 2*SAFE_DISTANCE);
+    return pred.is_in_lane(lane) && pred.s > s && (pred.s - s < SAFE_DISTANCE);
   }
 
   vector<prediction> Vehicle::generate_predictions(double interval, int horizon) {

@@ -30,7 +30,7 @@ namespace pathplanner {
 
     Vehicle& ego_car;
     double car_s;
-    double const PREDICTION_INTERVAL = 0.05;
+    double const PREDICTION_INTERVAL = 0.15;
 
     bool verbosity = false;
     
@@ -40,7 +40,7 @@ namespace pathplanner {
 
   private:
     double const SPEED_INCREMENT = .224;
-    double const MAX_SPEED = 49.97;
+    double const MAX_SPEED = 49.96;
     double const TIME_INTERVAL = 0.02;
     double const PREDICTIONS_COUNT = 5;
 
