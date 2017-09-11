@@ -179,7 +179,7 @@ namespace pathplanner {
     double velocity = ref_vel;
     if (too_close) {
       if (danger) {
-        if (velocity > 43.0) {
+        if (velocity > 44.0) {
           velocity -= 3 * SPEED_INCREMENT;
         }
         else if (velocity > 30.0) {
@@ -194,7 +194,7 @@ namespace pathplanner {
           velocity += SPEED_INCREMENT;
         }
         else if (velocity > max_speed) {
-          if (velocity > 43.0) {
+          if (velocity > 44.0) {
             velocity -= 3 * SPEED_INCREMENT;
           }
           else if (velocity > 30.0) {
