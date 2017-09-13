@@ -55,6 +55,7 @@ int main() {
     iss >> d_y;
     Map::add_waypoints(x, y, s, d_x, d_y);
   }
+  Map::init();
 
   PathPlanner planner;
 

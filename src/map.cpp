@@ -9,6 +9,7 @@ namespace helpers {
   vector<double> Map::map_waypoints_s = vector<double>() ;
   vector<double> Map::map_waypoints_dx = vector<double>();
   vector<double> Map::map_waypoints_dy = vector<double>();
+  tk::spline Map::s_x, Map::s_y, Map::s_dx, Map::s_dy;
 
   double Map::MAX_S = 6945.554;
 
@@ -20,21 +21,35 @@ namespace helpers {
     map_waypoints_dy.push_back(d_y);
   }
 
+  void Map::init() {
+    s_x.set_points(map_waypoints_s, map_waypoints_x);
+    s_y.set_points(map_waypoints_s, map_waypoints_y);
+    s_dx.set_points(map_waypoints_s, map_waypoints_dx);
+    s_dy.set_points(map_waypoints_s, map_waypoints_dy);
+  }
+
   double Map::distance(double x1, double y1, double x2, double y2)
   {
     return sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
   }
+
+  int Map::cyclic_index(int i) {
+    int res = i;
+    int cnt = 0;
+    while (res<0) {
+      res += map_waypoints_x.size();
+      assert(cnt++ < 10);
+    }
+    return res % map_waypoints_x.size();
+  }
+
 
   Frenet Map::getFrenet(double x, double y, double theta) {
     Frenet frenet;
     int next_wp = NextWaypoint(x, y, theta);
 
     int prev_wp;
-    prev_wp = next_wp - 1;
-    if (next_wp == 0)
-    {
-      prev_wp = map_waypoints_x.size() - 1;
-    }
+    prev_wp = cyclic_index(next_wp - 1);
 
     double n_x = map_waypoints_x[next_wp] - map_waypoints_x[prev_wp];
     double n_y = map_waypoints_y[next_wp] - map_waypoints_y[prev_wp];
@@ -46,28 +61,26 @@ namespace helpers {
     double proj_x = proj_norm*n_x;
     double proj_y = proj_norm*n_y;
 
-    frenet.d = distance(x_x, x_y, proj_x, proj_y);
+    double sign_len = (x_x * n_x + x_y * n_y) / sqrt(n_x * n_x + n_y * n_y);
 
     //see if d value is positive or negative by comparing it to a center point
 
-    double center_x = 1000 - map_waypoints_x[prev_wp];
-    double center_y = 2000 - map_waypoints_y[prev_wp];
-    double centerToPos = distance(center_x, center_y, x_x, x_y);
-    double centerToRef = distance(center_x, center_y, proj_x, proj_y);
+    frenet.s = map_waypoints_s[prev_wp];
+    double s_dist = map_waypoints_s[next_wp] - map_waypoints_s[prev_wp];
+    if (s_dist<0)
+      s_dist += MAX_S;
+    double xy_dist = distance(map_waypoints_x[prev_wp], map_waypoints_y[prev_wp], map_waypoints_x[next_wp], map_waypoints_y[next_wp]);
+    frenet.s += (s_dist / xy_dist) * sign_len;
+    if (frenet.s < (map_waypoints_s[map_waypoints_s.size() - 1] - MAX_S))
+      frenet.s += MAX_S;
 
-    if (centerToPos <= centerToRef)
-    {
-      frenet.d *= -1;
-    }
+    double x_adj = s_x(frenet.s);
+    double y_adj = s_y(frenet.s);
 
-    // calculate s value
-    frenet.s = 0;
-    for (int i = 0; i < prev_wp; i++)
-    {
-      frenet.s += distance(map_waypoints_x[i], map_waypoints_y[i], map_waypoints_x[i + 1], map_waypoints_y[i + 1]);
-    }
+    frenet.d = distance(x, y, x_adj, y_adj);
 
-    frenet.s += distance(0, 0, proj_x, proj_y);
+    if (frenet.s < 0)
+      frenet.s += MAX_S;
 
     return frenet;
   }
@@ -75,29 +88,14 @@ namespace helpers {
   Coord Map::getXY(double s, double d)
   {
     Coord coord;
-    int prev_wp = -1;
-
-    while (s > map_waypoints_s[prev_wp + 1] && (prev_wp < (int)(map_waypoints_s.size() - 1)))
-    {
-      prev_wp++;
-    }
-
-    int wp2 = (prev_wp + 1) % map_waypoints_x.size();
-
-    double heading = atan2((map_waypoints_y[wp2] - map_waypoints_y[prev_wp]), (map_waypoints_x[wp2] - map_waypoints_x[prev_wp]));
-    // the x,y,s along the segment
-    double seg_s = (s - map_waypoints_s[prev_wp]);
-
-    double seg_x = map_waypoints_x[prev_wp] + seg_s*cos(heading);
-    double seg_y = map_waypoints_y[prev_wp] + seg_s*sin(heading);
-
-    double perp_heading = heading - pi() / 2;
-
-    coord.x = seg_x + d*cos(perp_heading);
-    coord.y = seg_y + d*sin(perp_heading);
+    double path_x = s_x(s);
+    double path_y = s_y(s);
+    double dx = s_dx(s);
+    double dy = s_dy(s);
+    coord.x = path_x + d * dx;
+    coord.y = path_y + d * dy;
 
     return coord;
-
   }
 
   int Map::NextWaypoint(double x, double y, double theta) {
@@ -108,14 +106,14 @@ namespace helpers {
 
     double heading = atan2((map_y - y), (map_x - x));
 
-    double angle = abs(theta - heading);
+    double angle = std::abs(theta - heading);
 
     if (angle > pi() / 4)
     {
       closestWaypoint++;
     }
 
-    return closestWaypoint;
+    return cyclic_index(closestWaypoint);
   }
 
   int Map::ClosestWaypoint(double x, double y)
