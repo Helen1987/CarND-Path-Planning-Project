@@ -178,7 +178,7 @@ namespace pathplanner {
     if (car_s > s_now.s) {
       double predicted_distance1v = snap.s - s_now.s + PREDICTION_INTERVAL*(v - collide_car_v);
       double predicted_distance2v = snap.s - s_now.s + 4*PREDICTION_INTERVAL*(v - collide_car_v);
-      if (predicted_distance2v < MANOEUVRE || predicted_distance1v < MANOEUVRE) {
+      if (predicted_distance2v < MANOEUVRE || predicted_distance1v < MANOEUVRE || snap.s - s_now.s < -1) {
         if (verbose) {
           cout << "2nd clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
             << "obsticle: " << s_now.s << endl;
