@@ -1,6 +1,7 @@
 #include <math.h>
 #include "helper_functions.h"
 #include "map.h"
+#include <iostream>
 
 namespace helpers {
 
@@ -22,6 +23,12 @@ namespace helpers {
   }
 
   void Map::init() {
+    map_waypoints_x.push_back(map_waypoints_x[0]);
+    map_waypoints_y.push_back(map_waypoints_y[0]);
+    map_waypoints_s.push_back(MAX_S);
+    map_waypoints_dx.push_back(map_waypoints_dx[0]);
+    map_waypoints_dy.push_back(map_waypoints_dy[0]);
+
     s_x.set_points(map_waypoints_s, map_waypoints_x);
     s_y.set_points(map_waypoints_s, map_waypoints_y);
     s_dx.set_points(map_waypoints_s, map_waypoints_dx);
@@ -33,14 +40,12 @@ namespace helpers {
     return sqrt((x2 - x1)*(x2 - x1) + (y2 - y1)*(y2 - y1));
   }
 
-  int Map::cyclic_index(int i) {
-    int res = i;
-    int cnt = 0;
-    while (res<0) {
-      res += map_waypoints_x.size();
-      assert(cnt++ < 10);
+  int Map::cyclic_index(int next_wp) {
+    if (next_wp == 0)
+    {
+      return map_waypoints_x.size() - 2;
     }
-    return res % map_waypoints_x.size();
+    return next_wp - 1;
   }
 
 
@@ -48,8 +53,7 @@ namespace helpers {
     Frenet frenet;
     int next_wp = NextWaypoint(x, y, theta);
 
-    int prev_wp;
-    prev_wp = cyclic_index(next_wp - 1);
+    int prev_wp = cyclic_index(next_wp);
 
     double n_x = map_waypoints_x[next_wp] - map_waypoints_x[prev_wp];
     double n_y = map_waypoints_y[next_wp] - map_waypoints_y[prev_wp];
@@ -61,26 +65,28 @@ namespace helpers {
     double proj_x = proj_norm*n_x;
     double proj_y = proj_norm*n_y;
 
-    double sign_len = (x_x * n_x + x_y * n_y) / sqrt(n_x * n_x + n_y * n_y);
+    // calculate s value
+    frenet.s = 0;
+    for (int i = 0; i < prev_wp; i++)
+    {
+      frenet.s += distance(map_waypoints_x[i], map_waypoints_y[i], map_waypoints_x[i + 1], map_waypoints_y[i + 1]);
+    }
 
-    //see if d value is positive or negative by comparing it to a center point
+    frenet.s += distance(0, 0, proj_x, proj_y);
+    if (frenet.s > MAX_S) {
+      frenet.s -= MAX_S;
+    }
 
-    frenet.s = map_waypoints_s[prev_wp];
-    double s_dist = map_waypoints_s[next_wp] - map_waypoints_s[prev_wp];
-    if (s_dist<0)
-      s_dist += MAX_S;
-    double xy_dist = distance(map_waypoints_x[prev_wp], map_waypoints_y[prev_wp], map_waypoints_x[next_wp], map_waypoints_y[next_wp]);
-    frenet.s += (s_dist / xy_dist) * sign_len;
-    if (frenet.s < (map_waypoints_s[map_waypoints_s.size() - 1] - MAX_S))
-      frenet.s += MAX_S;
+    double adj_x = s_x(frenet.s);
+    double adj_y = s_y(frenet.s);
 
-    double x_adj = s_x(frenet.s);
-    double y_adj = s_y(frenet.s);
-
-    frenet.d = distance(x, y, x_adj, y_adj);
-
-    if (frenet.s < 0)
-      frenet.s += MAX_S;
+    frenet.d = distance(x, y, adj_x, adj_y);
+    if (frenet.d > 9.5) {
+      frenet.d = 9.5;
+    }
+    else if (frenet.d < 2) {
+      frenet.d = 2;
+    }
 
     return frenet;
   }
@@ -101,19 +107,23 @@ namespace helpers {
   int Map::NextWaypoint(double x, double y, double theta) {
     int closestWaypoint = ClosestWaypoint(x, y);
 
-    double map_x = map_waypoints_x[closestWaypoint];
-    double map_y = map_waypoints_y[closestWaypoint];
+    double dx = map_waypoints_dx[closestWaypoint];
+    double dy = map_waypoints_dy[closestWaypoint];
 
-    double heading = atan2((map_y - y), (map_x - x));
+    double heading = atan2(dy, dx) + pi()/2;
+    //std::cout << "dy, dx, atan2" << dy << " " << dx << " " << atan2(dy, dx) << std::endl;
 
     double angle = std::abs(theta - heading);
 
     if (angle > pi() / 4)
     {
       closestWaypoint++;
+      if (closestWaypoint == map_waypoints_dx.size() - 1) {
+        closestWaypoint = 0;
+      }
     }
 
-    return cyclic_index(closestWaypoint);
+    return closestWaypoint;
   }
 
   int Map::ClosestWaypoint(double x, double y)
@@ -122,7 +132,7 @@ namespace helpers {
     double closestLen = 100000; //large number
     int closestWaypoint = 0;
 
-    for (int i = 0; i < map_waypoints_x.size(); i++)
+    for (int i = 0; i < map_waypoints_x.size() - 1; i++)
     {
       double map_x = map_waypoints_x[i];
       double map_y = map_waypoints_y[i];
