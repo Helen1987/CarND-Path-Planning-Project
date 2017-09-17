@@ -113,7 +113,8 @@ namespace pathplanner {
       TrajectoryData get_helper_data(double car_s, double ref_s, vector<snapshot> trajectory,
         map<int, vector<prediction>> predictions, CarState state);
 
-      bool check_collision(double car_s, double ref_speed, snapshot snap, prediction s_now, CarState checkstate);
+      bool check_collision(double car_s, double ref_speed, snapshot snap, prediction s_now, 
+        CarState checkstate, bool lack_of_space);
 
       map<int, vector<prediction>> filter_predictions_by_lane(
         map<int, vector<prediction>> predictions, int lane);
