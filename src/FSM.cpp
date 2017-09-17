@@ -89,10 +89,10 @@ namespace pathplanner {
       return est1.cost < est2.cost;
     });
 
-    if (verbosity) {
+    //if (verbosity) {
       cout << "best estimate: " << (*best).cost << " in state " << as_integer((*best).state) 
         << " in lane: " << ego_car.lane << endl;
-    }
+    //}
     return (*best).state;
   }
 
@@ -179,7 +179,7 @@ namespace pathplanner {
     double velocity = ref_vel;
     if (too_close) {
       if (danger) {
-        if (velocity > 34.0) {
+        if (velocity > 40.0) {
           velocity -= 2 * SPEED_INCREMENT;
         }
         else {
@@ -191,7 +191,7 @@ namespace pathplanner {
           velocity += SPEED_INCREMENT;
         }
         else if (velocity > max_speed) {
-          if (velocity > 34.0) {
+          if (velocity > 40.0) {
             velocity -= 2 * SPEED_INCREMENT;
           }
           else {
@@ -267,18 +267,9 @@ namespace pathplanner {
     }
     if (at_behind.size() > 0)
     {
-      int max_s = -1000;
-      vector<prediction> nearest_behind = {};
-      for (auto pred : at_behind) {
-        if ((pred[0].s) > max_s)
-        {
-          max_s = pred[0].s;
-          nearest_behind = pred;
-        }
-      }
       double velocity = ref_vel;
       if (close) {
-        if (velocity > 34.0) {
+        if (velocity > 40.0) {
           velocity -= 2 * SPEED_INCREMENT;
         }
         else {
