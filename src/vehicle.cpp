@@ -121,21 +121,20 @@ namespace pathplanner {
 
   prediction Vehicle::state_at(double t) {
     prediction pred;
-    double x, y;
     if (abs(this->ddy) < 0.001) {
-      y = this->y + this->dy * t;
+      pred.y = this->y + this->dy * t;
       pred.vy = this->dy;
     }
     else {
-      y = this->y + this->dy * t + this->ddy * t * t / 2;
+      pred.y = this->y + this->dy * t + this->ddy * t * t / 2;
       pred.vy = this->dy + this->ddy * t;
     }
     if (abs(this->ddy) < 0.001) {
-      x = this->x + this->dx * t;
+      pred.x = this->x + this->dx * t;
       pred.vx = this->dx;
     }
     else {
-      x = this->x + this->dx * t + this->ddx * t * t / 2;
+      pred.x = this->x + this->dx * t + this->ddx * t * t / 2;
       pred.vx = this->dx + this->ddx * t;
     }
     double new_angle = atan2(pred.vy, pred.vx);
@@ -147,15 +146,17 @@ namespace pathplanner {
   }
 
   bool Vehicle::is_in_front_of(prediction pred, int checked_lane) {
-    return pred.is_in_lane(checked_lane) && pred.s < s;
+    return pred.is_in_lane(checked_lane) && pred.get_distance(x, y, s) >= 0;
   }
 
   bool Vehicle::is_behind_of(prediction pred, int lane) {
-    return pred.is_in_lane(lane) && (pred.s > s && (pred.s - s) < 2*SAFE_DISTANCE);
+    double distance = -pred.get_distance(x, y, s);
+    return pred.is_in_lane(lane) && (distance >= 0 && distance < 2*SAFE_DISTANCE);
   }
 
   bool Vehicle::is_close_to(prediction pred, int lane) {
-    return pred.is_in_lane(lane) && pred.s > s && (pred.s - s < SAFE_DISTANCE);
+    double distance = -pred.get_distance(x, y, s);
+    return pred.is_in_lane(lane) && distance >= 0 && (distance < SAFE_DISTANCE);
   }
 
   vector<prediction> Vehicle::generate_predictions(double interval, int horizon) {

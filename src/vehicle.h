@@ -9,6 +9,8 @@
 #include <string>
 #include <iterator>
 
+#include "map.h"
+
 namespace pathplanner {
   using namespace std;
 
@@ -18,9 +20,22 @@ namespace pathplanner {
     double d;
     double vx;
     double vy;
+    double x;
+    double y;
 
     bool is_in_lane(int lane) {
-      return d < (LANE_WIDTH * (lane + 1)) && d >(LANE_WIDTH * lane);
+      return d < (LANE_WIDTH * (lane + 1) - 0.5) && d >(LANE_WIDTH * lane + 0.5);
+    }
+
+    double get_distance(double other_x, double other_y, double other_s) {
+      double diff_car = sqrt((x-other_x)*(x-other_x) + (y-other_y)*(y-other_y));
+      double diff_frenet = other_s - s;
+      if (diff_car - std::abs(diff_frenet) < 100) { // no circle overlap
+        return diff_frenet;
+      }
+      else {
+        return copysign(diff_car, diff_frenet);
+      }
     }
 
     double get_velocity() {

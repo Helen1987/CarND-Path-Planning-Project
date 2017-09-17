@@ -39,7 +39,7 @@ namespace pathplanner {
     for (auto data : sensor_fusion) {
       // [id, x, y, dx, dy, s, d]
       Vehicle* vehicle = NULL;
-      if (((double)data[5] < Map::MAX_S) && ((double)data[6] > 0)) {// check if car is visible
+      if (((double)data[5] <= Map::MAX_S) && ((double)data[6] >= 0)) {// check if car is visible
         if (vehicles.find(data[0]) == vehicles.end()) {
 
           vehicle = new Vehicle(data[0], data[1], data[2], data[3], data[4], data[5], data[6]);
