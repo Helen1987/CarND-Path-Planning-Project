@@ -65,6 +65,20 @@ namespace helpers {
     double proj_x = proj_norm*n_x;
     double proj_y = proj_norm*n_y;
 
+    frenet.d = distance(x_x, x_y, proj_x, proj_y);
+
+    //see if d value is positive or negative by comparing it to a center point
+
+    double center_x = 1000 - map_waypoints_x[prev_wp];
+    double center_y = 2000 - map_waypoints_y[prev_wp];
+    double centerToPos = distance(center_x, center_y, x_x, x_y);
+    double centerToRef = distance(center_x, center_y, proj_x, proj_y);
+
+    if (centerToPos <= centerToRef)
+    {
+      frenet.d *= -1;
+    }
+
     // calculate s value
     frenet.s = 0;
     for (int i = 0; i < prev_wp; i++)
@@ -73,20 +87,6 @@ namespace helpers {
     }
 
     frenet.s += distance(0, 0, proj_x, proj_y);
-    if (frenet.s > MAX_S) {
-      frenet.s -= MAX_S;
-    }
-
-    double adj_x = s_x(frenet.s);
-    double adj_y = s_y(frenet.s);
-
-    frenet.d = distance(x, y, adj_x, adj_y);
-    if (frenet.d > 9.5) {
-      frenet.d = 9.5;
-    }
-    else if (frenet.d < 2) {
-      frenet.d = 2;
-    }
 
     return frenet;
   }
