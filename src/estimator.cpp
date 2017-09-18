@@ -187,7 +187,7 @@ namespace pathplanner {
     }
     else {
       double predicted_distance1v = -diff + PREDICTION_INTERVAL*(collide_car_v - v);
-      if (predicted_distance1v < 0) {
+      if (predicted_distance1v < 0 || -diff < -MANOEUVRE) {
         if (verbose) {
           cout << "3rd clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
             << "obsticle: " << s_now.s << " diff " << diff <<endl;
@@ -203,10 +203,8 @@ namespace pathplanner {
     map<int, vector<prediction>> predictions, int lane) {
     map<int, vector<prediction>> filtered = {};
     for (auto pair: predictions) {
-      double d = pair.second[0].d;
       // because of poor coord transformation reduce lane definition on 0.5m
-      bool is_in_lane = d < (4.0 * (lane + 1)) && d >(4.0 * lane);
-      if (is_in_lane) {
+      if (pair.second[0].is_in_lane(lane)) {
         filtered[pair.first] = pair.second;
       }
     }
