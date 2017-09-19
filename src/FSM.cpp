@@ -103,9 +103,8 @@ namespace pathplanner {
     // pretend to be in new proposed state
     //state = proposed_state;
     vector<snapshot> trajectory = { initial_snapshot };
+    state = proposed_state;
     for (int i = 0; i < horizon; ++i) {
-      restore_state_from_snapshot(initial_snapshot);
-      state = proposed_state;
       realize_state(predictions);
       ego_car.increment(PREDICTION_INTERVAL);
       trajectory.push_back(get_snapshot());

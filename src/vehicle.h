@@ -43,7 +43,8 @@ namespace pathplanner {
     }
 
     void display() {
-      cout << "s: " << s << " d: " << d << " vx: " << vx << " vy: " << vy << endl;
+      cout << "s: " << s << " d: " << d << " vx: " << vx << " vy: " << vy << 
+        " x: " << x << " y: " << y << endl;
     }
   };
 

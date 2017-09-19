@@ -121,7 +121,7 @@ namespace pathplanner {
 
   prediction Vehicle::state_at(double t) {
     prediction pred;
-    if (abs(this->ddy) < 0.001) {
+    if (std::abs(this->ddy) < 0.001) {
       pred.y = this->y + this->dy * t;
       pred.vy = this->dy;
     }
@@ -129,7 +129,7 @@ namespace pathplanner {
       pred.y = this->y + this->dy * t + this->ddy * t * t / 2;
       pred.vy = this->dy + this->ddy * t;
     }
-    if (abs(this->ddy) < 0.001) {
+    if (std::abs(this->ddy) < 0.001) {
       pred.x = this->x + this->dx * t;
       pred.vx = this->dx;
     }
@@ -139,7 +139,7 @@ namespace pathplanner {
     }
     double new_angle = atan2(pred.vy, pred.vx);
     double yaw = (new_angle < 0.1) ? 0 : new_angle;
-    Frenet frenet = Map::getFrenet(x, y, yaw);
+    Frenet frenet = Map::getFrenet(pred.x, pred.y, yaw);
     pred.s = frenet.s;
     pred.d = frenet.d;
     return pred;
