@@ -269,10 +269,7 @@ namespace pathplanner {
     {
       double velocity = ref_vel;
       if (close) {
-        if (velocity > 46.0) {
-          velocity -= 3 * SPEED_INCREMENT;
-        }
-        else if (velocity > 40.0) {
+        if (velocity > 40.0) {
           velocity -= 2 * SPEED_INCREMENT;
         }
         else {

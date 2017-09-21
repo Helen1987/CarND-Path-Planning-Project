@@ -95,8 +95,13 @@ namespace pathplanner {
     update_accel(vx, vy, diff);
     this->s = s;
     int new_lane = (int) d / 4;
-    if (new_lane != this->lane && ++updates > 20) {
-      this->lane = new_lane;
+    if (new_lane != this->lane){
+      if (++updates > 6) {
+        this->lane = new_lane;
+        updates = 0;
+      }
+    }
+    else {
       updates = 0;
     }
     this->d = d;

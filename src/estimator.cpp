@@ -182,9 +182,10 @@ namespace pathplanner {
 
     double collide_car_v = s_now.get_velocity();
     double diff = s_now.get_distance(snap.x, snap.y, snap.s);
+    double prediction_time = 4 / snap.dx;
     if (car_s > s_now.s) {// TODO
-      double predicted_distance1v = diff + 3*PREDICTION_INTERVAL*(v - collide_car_v);
-      double predicted_distance2v = diff + 10*PREDICTION_INTERVAL*(v - collide_car_v);
+      double predicted_distance1v = diff + prediction_time*(v - collide_car_v);
+      double predicted_distance2v = diff + 10* PREDICTION_INTERVAL*(ref_speed - collide_car_v);
       if ((predicted_distance2v < MANOEUVRE || predicted_distance1v < MANOEUVRE || lack_of_space || diff < -1.0)) {
         if (verbose) {
           cout << "2nd clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
