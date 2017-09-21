@@ -20,6 +20,9 @@ namespace pathplanner {
     map<int, vector<prediction>> predictions, TrajectoryData data) const {
 
     if (data.proposed_lane != data.current_lane) {
+      if (data.proposed_lane == 1) {
+        return 0;
+      }
       return COMFORT;
     }
 
@@ -120,7 +123,7 @@ namespace pathplanner {
 
     data.collides = collision();
     data.collides.hasCollision = false;
-    bool checkCollisions = data.current_lane != data.proposed_lane;
+    bool checkCollisions = current_snapshot.lane != data.proposed_lane;
 
     map<int, vector<prediction>> cars_in_proposed_lane = filter_predictions_by_lane(predictions, data.proposed_lane);
     map<int, vector<prediction>> cars_in_actual_lane = filter_predictions_by_lane(predictions, data.current_lane);
@@ -134,7 +137,6 @@ namespace pathplanner {
 
       for (auto pair : cars_in_actual_lane) {
         prediction state = pair.second[i];
-        // do not check collisions on actual line
         double dist = -state.get_distance(snap.x, snap.y, snap.s);
         if (dist >= 0 && dist < data.actual_closest_approach) {
           data.actual_closest_approach = dist;
@@ -147,18 +149,24 @@ namespace pathplanner {
 
       for (auto pair : cars_in_proposed_lane) {
         prediction state = pair.second[i];
-        double pred_car_s = car_s + i*0.15*ref_s;
+        //double pred_car_s = car_s + i*0.15*ref_s;
         double dist = -state.get_distance(snap.x, snap.y, snap.s);
         if (checkCollisions) {
-          bool vehicle_collides = check_collision(pred_car_s, ref_s, snap, state, checkstate,
+          bool vehicle_collides = check_collision(car_s, ref_s, snap, state, checkstate,
             data.actual_closest_approach < MANOEUVRE);
           if (vehicle_collides) {
             data.collides.hasCollision = true;
             data.collides.step = i;
           }
+          else if (car_s > state.s) {
+            dist = MAX_DISTANCE;
+          }
         }
         if (dist >= 0 && dist < data.prop_closest_approach) {
           data.prop_closest_approach = dist;
+          if (data.proposed_lane == data.current_lane) {
+            data.actual_closest_approach = data.prop_closest_approach;
+          }
         }
       }
     }
@@ -175,9 +183,9 @@ namespace pathplanner {
     double collide_car_v = s_now.get_velocity();
     double diff = s_now.get_distance(snap.x, snap.y, snap.s);
     if (car_s > s_now.s) {// TODO
-      double predicted_distance1v = diff + PREDICTION_INTERVAL*(v - collide_car_v);
-      double predicted_distance2v = diff + 3*PREDICTION_INTERVAL*(v - collide_car_v);
-      if ((predicted_distance2v < MANOEUVRE || predicted_distance1v < MANOEUVRE) && (diff < -1.0 || lack_of_space)) {
+      double predicted_distance1v = diff + 3*PREDICTION_INTERVAL*(v - collide_car_v);
+      double predicted_distance2v = diff + 10*PREDICTION_INTERVAL*(v - collide_car_v);
+      if ((predicted_distance2v < MANOEUVRE || predicted_distance1v < MANOEUVRE || lack_of_space || diff < -1.0)) {
         if (verbose) {
           cout << "2nd clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
             << "obsticle: " << s_now.s << " diff " << diff << endl;
@@ -186,7 +194,7 @@ namespace pathplanner {
       }
     }
     else {
-      double predicted_distance1v = -diff + PREDICTION_INTERVAL*(collide_car_v - v);
+      double predicted_distance1v = -diff + 3*PREDICTION_INTERVAL*(collide_car_v - v);
       if (predicted_distance1v < 0 || -diff < -MANOEUVRE) {
         if (verbose) {
           cout << "3rd clause: s " << s << " v " << v << " car_s: " << car_s << " col_v " << collide_car_v
@@ -204,7 +212,7 @@ namespace pathplanner {
     map<int, vector<prediction>> filtered = {};
     for (auto pair: predictions) {
       // because of poor coord transformation reduce lane definition on 0.5m
-      if (pair.second[0].is_in_lane(lane)) {
+      if (pair.second[0].lane == lane) {
         filtered[pair.first] = pair.second;
       }
     }

@@ -103,10 +103,11 @@ namespace pathplanner {
     // pretend to be in new proposed state
     //state = proposed_state;
     vector<snapshot> trajectory = { initial_snapshot };
-    state = proposed_state;
     for (int i = 0; i < horizon; ++i) {
+      restore_state_from_snapshot(initial_snapshot);
+      state = proposed_state;
       realize_state(predictions);
-      ego_car.increment(PREDICTION_INTERVAL);
+      ego_car.increment(i*PREDICTION_INTERVAL);
       trajectory.push_back(get_snapshot());
 
       // need to remove first prediction for each vehicle.
@@ -259,7 +260,7 @@ namespace pathplanner {
         at_behind.push_back(v);
       }
       if (ego_car.is_close_to(v[0], ego_car.lane)) {
-        if (v[0].s + v[0].get_velocity()*30*PREDICTION_INTERVAL < ego_car.s + ego_car.get_velocity()*30*PREDICTION_INTERVAL + 3) {
+        if (v[0].get_distance(ego_car.x, ego_car.y, ego_car.s) < 4 ) {
           close = true;
         }
       }
@@ -268,7 +269,10 @@ namespace pathplanner {
     {
       double velocity = ref_vel;
       if (close) {
-        if (velocity > 40.0) {
+        if (velocity > 46.0) {
+          velocity -= 3 * SPEED_INCREMENT;
+        }
+        else if (velocity > 40.0) {
           velocity -= 2 * SPEED_INCREMENT;
         }
         else {

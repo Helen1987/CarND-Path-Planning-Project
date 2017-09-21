@@ -28,10 +28,12 @@ namespace pathplanner {
     this->dy = dy;
     this->s = s;
     this->d = d;
+    this->lane = (int)d / 4;
     this->ddx = 0;
     this->ddy = 0;
     double angle = atan2(dy, dx);
     this->yaw = (abs(angle) < 0.1) ? 0 : angle;
+    this->updates = 0;
   }
 
   Vehicle::Vehicle(int id) {
@@ -45,7 +47,7 @@ namespace pathplanner {
   }
 
   bool Vehicle::shouldPredict() {
-    return updates > 3;
+    return true;
   }
 
   void Vehicle::display() {
@@ -69,7 +71,6 @@ namespace pathplanner {
     update_accel(speed*cos(this->yaw), speed*sin(this->yaw), diff);
     this->s = s;
     this->d = d;
-    //display();
   }
 
   void Vehicle::update_accel(double vx, double vy, double diff) {
@@ -93,8 +94,12 @@ namespace pathplanner {
     this->y = y;
     update_accel(vx, vy, diff);
     this->s = s;
+    int new_lane = (int) d / 4;
+    if (new_lane != this->lane && ++updates > 20) {
+      this->lane = new_lane;
+      updates = 0;
+    }
     this->d = d;
-    ++updates;
   }
 
   void Vehicle::increment(double t) {
@@ -142,21 +147,22 @@ namespace pathplanner {
     Frenet frenet = Map::getFrenet(pred.x, pred.y, yaw);
     pred.s = frenet.s;
     pred.d = frenet.d;
+    pred.lane = this->lane;//TODO update if have future predictions
     return pred;
   }
 
   bool Vehicle::is_in_front_of(prediction pred, int checked_lane) {
-    return pred.is_in_lane(checked_lane) && pred.get_distance(x, y, s) >= 0;
+    return (pred.lane == checked_lane) && pred.get_distance(x, y, s) >= 0;
   }
 
   bool Vehicle::is_behind_of(prediction pred, int lane) {
     double distance = -pred.get_distance(x, y, s);
-    return pred.is_in_lane(lane) && (distance >= 0 && distance < 2*SAFE_DISTANCE);
+    return (pred.lane == lane) && (distance >= 0 && distance < 2*SAFE_DISTANCE);
   }
 
   bool Vehicle::is_close_to(prediction pred, int lane) {
     double distance = -pred.get_distance(x, y, s);
-    return pred.is_in_lane(lane) && distance >= 0 && (distance < SAFE_DISTANCE);
+    return (pred.lane == lane) && distance >= 0 && (distance < SAFE_DISTANCE);
   }
 
   vector<prediction> Vehicle::generate_predictions(double interval, int horizon) {

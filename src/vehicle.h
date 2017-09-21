@@ -22,10 +22,7 @@ namespace pathplanner {
     double vy;
     double x;
     double y;
-
-    bool is_in_lane(int lane) {
-      return d < (LANE_WIDTH * (lane + 1) - 0.5) && d >(LANE_WIDTH * lane + 0.5);
-    }
+    int lane;
 
     double get_distance(double other_x, double other_y, double other_s) {
       double diff_car = sqrt((x-other_x)*(x-other_x) + (y-other_y)*(y-other_y));

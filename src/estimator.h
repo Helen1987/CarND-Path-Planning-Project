@@ -88,9 +88,9 @@ namespace pathplanner {
       double MAX_SPEED;
       double const DESIRED_BUFFER = Vehicle::SAFE_DISTANCE*2;
 
-      int const PLANNING_HORIZON = 4;
+      int const PLANNING_HORIZON = 1;
 
-      double const PREDICTION_INTERVAL = 0.5;
+      double const PREDICTION_INTERVAL = 0.15;
       double const MANOEUVRE = 4.0;
       double const OBSERVED_DISTANCE = 65;
       double const MAX_DISTANCE = 999999;
