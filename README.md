@@ -15,7 +15,10 @@ The highway's waypoints loop around so the frenet s value, distance along the ro
 
 ## Solution
 
-Approach for this project is described in [Model Documentation](https://github.com/Helen1987/CarND-Path-Planning-Project/blob/master/Model%20Documentation.md). Resulting **video** can be seen [here](https://youtu.be/KPhDFnaY9MA)
+Approach for this project is described in [Model Documentation](https://github.com/Helen1987/CarND-Path-Planning-Project/blob/master/Model%20Documentation.md). Resulting **video**:
+* Path Planning [project](https://www.youtube.com/watch?v=eBxk7PgIWx4)
+* Bosch Challenge [2.75 Mile Track](https://www.youtube.com/watch?v=Dk5NRqY8JCQ)
+* Bosch Challenge [1.75 Mile Track](https://www.youtube.com/watch?v=eBxk7PgIWx4)
 
 Known issues:
 1. Poor accuracy for provided conversion methods from frenet coordinates to cartesian one. It could lead to wrong car behavior or even accidents on curvy parts of the roads. 
