@@ -33,4 +33,4 @@ Next step is to [calculate cost](https://github.com/Helen1987/CarND-Path-Plannin
 
 ### Points to improve
 
-Conversion methods have quite a poor accuracy. As a result, I still can sometimes see odd car's behavior and accidents caused by this reason. 
+Conversion methods have quite poor accuracy. As a result, I still can sometimes see odd car's behavior and accidents caused by this reason. 
